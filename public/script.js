@@ -16,6 +16,7 @@
 */
 
 let prev_modems;
+let prev_temps;
 let update_timer;
 let isStreaming = false;
 
@@ -26,6 +27,7 @@ function enableUpdates() {
 function updateStatus() {
   updateStartStopButton();
   updateModems();
+  updateTemps();
 }
 
 async function updateStartStopButton() {
@@ -105,6 +107,34 @@ async function updateModems() {
 
   modemsList.innerHTML = html;
   prev_modems = modems;
+}
+
+async function updateTemps() {
+  const response = await fetch("/temps");
+  const temps = await response.json();
+
+  if (!response.ok) return;
+
+  const tempsList = document.getElementById("temps");
+  let html = "";
+
+  temps.forEach((temps, i) => {
+    let type_value = 0;
+
+    //if (prev_temps && i in prev_temps && "type_value" in prev_temps[i]) {
+      //type_value = temps.type_value - prev_temps[i].type_value;
+      type_value = Math.round(temps.type_value  / 1000);
+    //}
+
+    html += `<tr>
+        <td>${temps.i}</td>
+        <td>${temps.type_name}</td>
+        <td>${type_value} °C</td>
+      </tr>`;
+  });
+
+  tempsList.innerHTML = html;
+  prev_temps = temps;
 }
 
 async function getPipelines() {
