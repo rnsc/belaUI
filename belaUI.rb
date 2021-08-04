@@ -55,6 +55,22 @@ def get_modems
   modems
 end
 
+def get_temps
+  temps = []
+
+  type = `cat /sys/class/thermal/thermal_zone*/type`
+  i = 0
+  type.each_line do |line|
+    if i > 0 && i <= 2
+      type_name = `cat /sys/class/thermal/thermal_zone#{i}/type | tr -d '\n'`
+      type_value = `cat /sys/class/thermal/thermal_zone#{i}/temp | tr -d '\n'`
+      temps.push({:i=>i, :type_name=>type_name, :type_value=>type_value})
+    end
+	i = i+1
+  end
+  temps
+end
+
 def get_pipelines()
   pipelines = []
   pipelines += Dir["#{$setup['belacoder_path']}/pipeline/jetson/*"].sort if $setup['hw'] == 'jetson'
@@ -98,6 +114,10 @@ end
 
 get '/modems' do
   json get_modems
+end
+
+get '/temps' do
+  json get_temps
 end
 
 get '/pipelines' do
