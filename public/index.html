@@ -231,7 +231,7 @@
 			  text: 'Kbps'
 			},
 			suggestedMin: 0,
-			suggestedMax: 4000
+			suggestedMax: 3000
 		  }
 		}
 	  },
@@ -247,7 +247,7 @@
 			data.forEach((item, index) => {
 			let txb = 0;
 			if (last_modem && index in last_modem && "txb" in last_modem[index] && "rxb" in last_modem[index]) {
-			  txb = item.txb - prev_modems[index].txb;
+			  txb = item.txb - last_modem[index].txb;
 			  txb = Math.round((txb * 8) / 1024);
 			}
 			if(myChart.data.datasets[index].data.length >= DATA_COUNT)
