@@ -75,6 +75,11 @@ def get_pipelines()
   pipelines = []
   pipelines += Dir["#{$setup['belacoder_path']}/pipeline/jetson/*"].sort if $setup['hw'] == 'jetson'
   pipelines += Dir["#{$setup['belacoder_path']}/pipeline/generic/*"].sort
+  pipelines.each do |pipelineFile|
+	text = File.read(pipelineFile)
+	new_contents = text.gsub(/textoverlay [^!]* ![[:blank:]]*\R+/,'')
+	File.open(pipelineFile, "w") {|filecontent| filecontent.puts new_contents }
+  end
   pipelines.map { |pipeline|
     { 'file' => pipeline, 'id' => Digest::SHA1.hexdigest(pipeline) }
   }
