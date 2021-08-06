@@ -60,6 +60,8 @@
         <tbody id="modems"></tbody>
       </table>
 	  
+	  <canvas id="myChart" width="400" height="400"></canvas>
+	  
 	  <table class="table mb-4">
         <thead>
           <tr>
@@ -160,5 +162,105 @@
     <script type="text/javascript" src="/jquery.ui.touch-punch.js"></script>
     <script type="text/javascript" src="/bootstrap.bundle.min.js"></script>
     <script type="text/javascript" src="/script.js"></script>
+	<script type="text/javascript" src="/chart.min.js"></script>
+	<script>
+	function getRandomInt(min, max) {
+	  min = Math.ceil(min);
+	  max = Math.floor(max);
+	  return Math.floor(Math.random() * (max - min) + min); //The maximum is exclusive and the minimum is inclusive
+	}
+
+	const DATA_COUNT = 12;
+	const labels = [];
+	for (let i = 0; i < DATA_COUNT; ++i) {
+	  labels.push(i.toString());
+	}
+	const data = {
+	  labels: labels,
+	  datasets: []
+	};
+	
+	let last_modem;
+	
+	$.getJSON("/modems", function(data) {
+		console.log(data);
+		data.forEach((item, index) => {
+			let txb = 0;
+			//R1=item.rxb
+			//T1=item.txb
+			//sleep 1
+			//R2=item.rxb
+			//T2=item.txb
+			//tot=(( (R2 + T2 - R1 - T1) / 1024 ))
+			myChart.data.datasets[index] = {
+				label: `${item.i} (${item.ip})`,
+				backgroundColor: `rgb(0, ${getRandomInt(0,255)}, ${getRandomInt(0,255)})`,
+				borderColor: `rgb(0, ${getRandomInt(0,255)}, ${getRandomInt(0,255)})`,
+				data: [txb],
+			  };
+		 });
+		myChart.update(); 
+		last_modem = data;
+	});
+
+	const config = {
+	  type: 'line',
+	  data: data,
+	  options: {
+		responsive: true,
+		plugins: {
+		  legend: {
+			position: 'bottom',
+		  },
+		  title: {
+			display: true,
+			text: 'Bitrate Graph by m_o_o_'
+		  }
+		},
+		scales: {
+		  x: {
+			display: true,
+			title: {
+			  display: true
+			}
+		  },
+		  y: {
+			display: true,
+			title: {
+			  display: true,
+			  text: 'Kbps'
+			},
+			suggestedMin: 0,
+			suggestedMax: 6000
+		  }
+		}
+	  },
+	};
+
+	var myChart = new Chart(
+		document.getElementById('myChart'),
+		config
+	  );
+	  
+	  setInterval(function(){
+		$.getJSON("/modems", function(data) {
+			data.forEach((item, index) => {
+			let txb = 0;
+			if (last_modem && index in last_modem && "txb" in last_modem[index] && "rxb" in last_modem[index]) {
+			  txb = item.txb - prev_modems[index].txb;
+			  txb = Math.round((txb * 8) / 1024);
+			}
+			if(myChart.data.datasets[index].data.length >= DATA_COUNT)
+			{
+				myChart.data.datasets[index].data.shift();
+			}
+			myChart.data.datasets[index].data.push(txb);
+		 });
+		myChart.update(); 
+		last_modem = data;
+		});
+	}, 1000);
+
+	</script>
   </body>
 </html>
