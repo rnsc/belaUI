@@ -60,7 +60,7 @@
         <tbody id="modems"></tbody>
       </table>
 	  
-	  <canvas id="myChart" width="400" height="400"></canvas>
+	  <canvas id="bitrateChart" width="400" height="400"></canvas>
 	  
 	  <table class="table mb-4">
         <thead>
@@ -72,6 +72,8 @@
         </thead>
         <tbody id="temps"></tbody>
       </table>
+	  
+	  <canvas id="tempChart" width="400" height="400"></canvas>
 
       <div id="settings">
         <div class="card mb-2">
@@ -170,6 +172,7 @@
 	  return Math.floor(Math.random() * (max - min) + min); //The maximum is exclusive and the minimum is inclusive
 	}
 
+	/** bitrate **/
 	const DATA_COUNT = 12;
 	const labels = [];
 	for (let i = 0; i < DATA_COUNT; ++i) {
@@ -182,8 +185,13 @@
 	
 	let last_modem;
 	
+	$("#startStop").on("click", function(event){
+		$("#bitrateChart").toggle();
+	});
+	
+	$("#bitrateChart").hide();
+	
 	$.getJSON("/modems", function(data) {
-		console.log(data);
 		data.forEach((item, index) => {
 			let txb = 0;
 			//R1=item.rxb
@@ -192,14 +200,14 @@
 			//R2=item.rxb
 			//T2=item.txb
 			//tot=(( (R2 + T2 - R1 - T1) / 1024 ))
-			myChart.data.datasets[index] = {
+			bitrateChart.data.datasets[index] = {
 				label: `${item.i} (${item.ip})`,
 				backgroundColor: `rgb(0, ${getRandomInt(0,255)}, ${getRandomInt(0,255)})`,
 				borderColor: `rgb(0, ${getRandomInt(0,255)}, ${getRandomInt(0,255)})`,
 				data: [txb],
 			  };
 		 });
-		myChart.update(); 
+		bitrateChart.update(); 
 		last_modem = data;
 	});
 
@@ -237,12 +245,12 @@
 	  },
 	};
 
-	var myChart = new Chart(
-		document.getElementById('myChart'),
+	var bitrateChart = new Chart(
+		document.getElementById('bitrateChart'),
 		config
-	  );
+	);
 	  
-	  setInterval(function(){
+	setInterval(function(){
 		$.getJSON("/modems", function(data) {
 			data.forEach((item, index) => {
 			let txb = 0;
@@ -250,17 +258,91 @@
 			  txb = item.txb - last_modem[index].txb;
 			  txb = Math.round((txb * 8) / 1024);
 			}
-			if(myChart.data.datasets[index].data.length >= DATA_COUNT)
+			if(bitrateChart.data.datasets[index].data.length >= DATA_COUNT)
 			{
-				myChart.data.datasets[index].data.shift();
+				bitrateChart.data.datasets[index].data.shift();
 			}
-			myChart.data.datasets[index].data.push(txb);
+			bitrateChart.data.datasets[index].data.push(txb);
 		 });
-		myChart.update(); 
+		bitrateChart.update(); 
 		last_modem = data;
 		});
 	}, 1000);
-
+	/** temperature **/
+	const labels_temp = [];
+	for (let i = 0; i < DATA_COUNT; ++i) {
+	  labels_temp.push(i.toString());
+	}
+	const data_temp = {
+	  labels: labels_temp,
+	  datasets: []
+	};
+	
+	$.getJSON("/temps", function(data) {
+		data.forEach((item, index) => {
+			tempval = item.type_value / 1000;
+			tempChart.data.datasets[index] = {
+				label: `(${item.i}) ${item.type_name}`,
+				backgroundColor: `rgb(0, ${getRandomInt(0,255)}, ${getRandomInt(0,255)})`,
+				borderColor: `rgb(0, ${getRandomInt(0,255)}, ${getRandomInt(0,255)})`,
+				data: [tempval],
+			  };
+		});
+		tempChart.update();
+	});
+	
+	const config_temp = {
+	  type: 'line',
+	  data: data_temp,
+	  options: {
+		responsive: true,
+		plugins: {
+		  legend: {
+			position: 'bottom',
+		  },
+		  title: {
+			display: true,
+			text: 'Temperature Graph by m_o_o_'
+		  }
+		},
+		scales: {
+		  x: {
+			display: true,
+			title: {
+			  display: true
+			}
+		  },
+		  y: {
+			display: true,
+			title: {
+			  display: true,
+			  text: '°C'
+			},
+			suggestedMin: 10,
+			suggestedMax: 100
+		  }
+		}
+	  },
+	};
+	
+	var tempChart = new Chart(
+		document.getElementById('tempChart'),
+		config_temp
+	  );
+	setInterval(function(){
+		$.getJSON("/temps", function(data) {
+			data.forEach((item, index) => {
+				//console.log(tempChart.data.datasets[index].data);
+				tempval = item.type_value / 1000;
+				if(tempChart.data.datasets[index].data.length >= DATA_COUNT)
+				{
+					tempChart.data.datasets[index].data.shift();
+				}
+				tempChart.data.datasets[index].data.push(tempval);
+			});
+		tempChart.update(); 
+		});
+	}, 1000);
 	</script>
   </body>
 </html>
