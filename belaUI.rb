@@ -49,7 +49,7 @@ def get_modems
       ip = line[srci+1]
       i = line[2]
       txb = File.read("/sys/class/net/#{i}/statistics/tx_bytes")
-      modems.push({:i=>i, :ip=>ip, :txb=>txb})
+      modems.push({:i=>i, :ip=>ip, :txb=>txb.gsub("\n",'')})
     end
   end
   modems
