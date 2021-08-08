@@ -29,135 +29,137 @@
     <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
-    <div class="container mt-4" style="max-width: 700px">
+	<div id="content">
+		<div class="container mt-4" style="max-width: 700px">
 
-      <div class="alert alert-danger alert-dismissible show" role="alert" id="errorMsg">
-        <span></span>
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div> <!-- .alert -->
+		  <div class="alert alert-danger alert-dismissible show" role="alert" id="errorMsg">
+			<span></span>
+			<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			  <span aria-hidden="true">&times;</span>
+			</button>
+		  </div> <!-- .alert -->
 
-      <div class="mb-4">
-        <button type="button" id="startStop" class="btn btn-lg btn-block mb-2">
-          Start
-        </button>
+		  <div class="mb-4">
+			<button type="button" id="startStop" class="btn btn-lg btn-block mb-2">
+			  Start
+			</button>
 
-        <div class="form-group">
-          <input type="text" id="bitrateValues" class="slider-values form-control" readonly/>
-          <div id="bitrateSlider" class="slider mt-2"></div>
-        </div>
-      </div> <!-- .mb-4 -->
+			<div class="form-group">
+			  <input type="text" id="bitrateValues" class="slider-values form-control" readonly/>
+			  <div id="bitrateSlider" class="slider mt-2"></div>
+			</div>
+		  </div> <!-- .mb-4 -->
 
-      <table class="table mb-4">
-        <thead>
-          <tr>
-            <th scope="col">Port</th>
-            <th scope="col">IP</th>
-            <th scope="col" class="col-6">Bitrate</th>
-          </tr>
-        </thead>
-        <tbody id="modems"></tbody>
-      </table>
-	  
-	  <canvas id="bitrateChart" width="400" height="400"></canvas>
-	  
-	  <table class="table mb-4">
-        <thead>
-          <tr>
-            <th scope="col">ID</th>
-            <th scope="col">Name</th>
-            <th scope="col" class="col-6">Temperature</th>
-          </tr>
-        </thead>
-        <tbody id="temps"></tbody>
-      </table>
-	  
-	  <canvas id="tempChart" width="400" height="400"></canvas>
+		  <table class="table mb-4">
+			<thead>
+			  <tr>
+				<th scope="col">Port</th>
+				<th scope="col">IP</th>
+				<th scope="col" class="col-6">Bitrate</th>
+			  </tr>
+			</thead>
+			<tbody id="modems"></tbody>
+		  </table>
+		  
+		  <canvas id="bitrateChart" width="400" height="400"></canvas>
+		  
+		  <table class="table mb-4">
+			<thead>
+			  <tr>
+				<th scope="col">ID</th>
+				<th scope="col">Name</th>
+				<th scope="col" class="col-6">Temperature</th>
+			  </tr>
+			</thead>
+			<tbody id="temps"></tbody>
+		  </table>
+		  
+		  <canvas id="tempChart" width="400" height="400"></canvas>
 
-      <div id="settings">
-        <div class="card mb-2">
-          <div class="card-header bg-success text-center" type="button"
-               data-toggle="collapse" data-target="#collapseOne">
-            <button class="btn btn-link text-white" type="button" data-toggle="collapse"
-                    data-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
-              Encoder settings
-            </button>
-          </div> <!-- card-header -->
+		  <div id="settings">
+			<div class="card mb-2">
+			  <div class="card-header bg-success text-center" type="button"
+				   data-toggle="collapse" data-target="#collapseOne">
+				<button class="btn btn-link text-white" type="button" data-toggle="collapse"
+						data-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+				  Encoder settings
+				</button>
+			  </div> <!-- card-header -->
 
-          <div class="collapse" id="collapseOne">
-            <div class="card-body">
-              <div class="form-group">
-                <select class="custom-select" name="pipelines" id="pipelines"></select>
-              </div>
-              <div id="delay" class="form-group">
-                <input type="text" id="delayValue" class="slider-values form-control" readonly/>
-                <div id="delaySlider" class="slider mt-2"></div>
-              </div>
-            </div> <!-- .card-body -->
-          </div> <!-- .collapse -->
-        </div> <!-- .card -->
+			  <div class="collapse" id="collapseOne">
+				<div class="card-body">
+				  <div class="form-group">
+					<select class="custom-select" name="pipelines" id="pipelines"></select>
+				  </div>
+				  <div id="delay" class="form-group">
+					<input type="text" id="delayValue" class="slider-values form-control" readonly/>
+					<div id="delaySlider" class="slider mt-2"></div>
+				  </div>
+				</div> <!-- .card-body -->
+			  </div> <!-- .collapse -->
+			</div> <!-- .card -->
 
-        <div class="card mb-2">
-          <div class="card-header bg-success text-center" type="button"
-               data-toggle="collapse" data-target="#collapseTwo">
-            <button class="btn btn-link text-white" type="button" data-toggle="collapse"
-              data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-              SRTLA settings
-            </button>
-          </div> <!-- .card-header -->
+			<div class="card mb-2">
+			  <div class="card-header bg-success text-center" type="button"
+				   data-toggle="collapse" data-target="#collapseTwo">
+				<button class="btn btn-link text-white" type="button" data-toggle="collapse"
+				  data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+				  SRTLA settings
+				</button>
+			  </div> <!-- .card-header -->
 
-          <div class="collapse" id="collapseTwo">
-            <div class="card-body">
-              <div class="form-group">
-                <label for="srtlaAddr">SRTLA receiver address</label>
-                <input type="text" class="form-control" id="srtlaAddr" />
-              </div>
-              <div class="form-group">
-                <label for="srtlaPort">SRTLA receiver port</label>
-                <input type="text" class="form-control" id="srtlaPort" />
-              </div>
-              <div class="form-group">
-                <label for="srtStreamid">SRT streamid</label>
-                <input type="text" class="form-control" id="srtStreamid" />
-              </div>
-              <div class="form-group">
-                <input type="text" id="srtLatencyValue" class="slider-values form-control" readonly/>
-                <div id="srtLatencySlider" class="slider mt-2"></div>
-              </div>
-            </div> <!-- .card-body -->
-          </div> <!-- .collapse -->
-        </div> <!-- .card -->
+			  <div class="collapse" id="collapseTwo">
+				<div class="card-body">
+				  <div class="form-group">
+					<label for="srtlaAddr">SRTLA receiver address</label>
+					<input type="text" class="form-control" id="srtlaAddr" />
+				  </div>
+				  <div class="form-group">
+					<label for="srtlaPort">SRTLA receiver port</label>
+					<input type="text" class="form-control" id="srtlaPort" />
+				  </div>
+				  <div class="form-group">
+					<label for="srtStreamid">SRT streamid</label>
+					<input type="text" class="form-control" id="srtStreamid" />
+				  </div>
+				  <div class="form-group">
+					<input type="text" id="srtLatencyValue" class="slider-values form-control" readonly/>
+					<div id="srtLatencySlider" class="slider mt-2"></div>
+				  </div>
+				</div> <!-- .card-body -->
+			  </div> <!-- .collapse -->
+			</div> <!-- .card -->
 
-        <div class="card mb-2">
-          <div class="card-header bg-success text-center" type="button"
-               data-toggle="collapse" data-target="#collapseThree">
-            <button class="btn btn-link text-white" type="button" data-toggle="collapse"
-                    data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-              System
-            </button>
-          </div> <!-- card-header -->
+			<div class="card mb-2">
+			  <div class="card-header bg-success text-center" type="button"
+				   data-toggle="collapse" data-target="#collapseThree">
+				<button class="btn btn-link text-white" type="button" data-toggle="collapse"
+						data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+				  System
+				</button>
+			  </div> <!-- card-header -->
 
-          <div class="collapse" id="collapseThree">
-            <div class="card-body">
-              <button type="button" id="poweroff" class="btn btn-block btn-danger command-btn">
-                Power off
-              </button>
-              <button type="button" id="reboot" class="btn btn-block btn-danger command-btn">
-                Restart
-              </button>
-            </div> <!-- .card-body -->
-          </div> <!-- .collapse -->
-        </div> <!-- .card -->
+			  <div class="collapse" id="collapseThree">
+				<div class="card-body">
+				  <button type="button" id="poweroff" class="btn btn-block btn-danger command-btn">
+					Power off
+				  </button>
+				  <button type="button" id="reboot" class="btn btn-block btn-danger command-btn">
+					Restart
+				  </button>
+				</div> <!-- .card-body -->
+			  </div> <!-- .collapse -->
+			</div> <!-- .card -->
 
-      </div> <!-- #settings -->
-    </div> <!-- .container -->
+		  </div> <!-- #settings -->
+		</div> <!-- .container -->
 
-    <div class="overlay" id="overlayBG"></div>
-    <div class="overlay" id="overlayText">
-      <p></p>
-      <button type="button" id="refreshBtn" class="btn btn-lg btn-light">Refresh</button>
-    </div>
+		<div class="overlay" id="overlayBG"></div>
+		<div class="overlay" id="overlayText">
+		  <p></p>
+		  <button type="button" id="refreshBtn" class="btn btn-lg btn-light">Refresh</button>
+		</div>
+	</div>
 
     <script type="text/javascript" src="/jquery-3.5.1.js"></script>
     <script type="text/javascript" src="/jquery-ui-1.12.1.js"></script>
@@ -165,184 +167,6 @@
     <script type="text/javascript" src="/bootstrap.bundle.min.js"></script>
     <script type="text/javascript" src="/script.js"></script>
 	<script type="text/javascript" src="/chart.min.js"></script>
-	<script>
-	function getRandomInt(min, max) {
-	  min = Math.ceil(min);
-	  max = Math.floor(max);
-	  return Math.floor(Math.random() * (max - min) + min); //The maximum is exclusive and the minimum is inclusive
-	}
-
-	/** bitrate **/
-	const DATA_COUNT = 12;
-	const labels = [];
-	for (let i = 0; i < DATA_COUNT; ++i) {
-	  labels.push(i.toString());
-	}
-	const data = {
-	  labels: labels,
-	  datasets: []
-	};
-	
-	let last_modem;
-	
-	$("#startStop").on("click", function(event){
-		$("#bitrateChart").toggle();
-	});
-	
-	$("#bitrateChart").hide();
-	
-	$.getJSON("/modems", function(data) {
-		data.forEach((item, index) => {
-			let txb = 0;
-			//R1=item.rxb
-			//T1=item.txb
-			//sleep 1
-			//R2=item.rxb
-			//T2=item.txb
-			//tot=(( (R2 + T2 - R1 - T1) / 1024 ))
-			bitrateChart.data.datasets[index] = {
-				label: `${item.i} (${item.ip})`,
-				backgroundColor: `rgb(0, ${getRandomInt(0,255)}, ${getRandomInt(0,255)})`,
-				borderColor: `rgb(0, ${getRandomInt(0,255)}, ${getRandomInt(0,255)})`,
-				data: [txb],
-			  };
-		 });
-		bitrateChart.update(); 
-		last_modem = data;
-	});
-
-	const config = {
-	  type: 'line',
-	  data: data,
-	  options: {
-		responsive: true,
-		plugins: {
-		  legend: {
-			position: 'bottom',
-		  },
-		  title: {
-			display: true,
-			text: 'Bitrate Graph by m_o_o_'
-		  }
-		},
-		scales: {
-		  x: {
-			display: true,
-			title: {
-			  display: true
-			}
-		  },
-		  y: {
-			display: true,
-			title: {
-			  display: true,
-			  text: 'Kbps'
-			},
-			suggestedMin: 0,
-			suggestedMax: 3000
-		  }
-		}
-	  },
-	};
-
-	var bitrateChart = new Chart(
-		document.getElementById('bitrateChart'),
-		config
-	);
-	  
-	setInterval(function(){
-		$.getJSON("/modems", function(data) {
-			data.forEach((item, index) => {
-			let txb = 0;
-			if (last_modem && index in last_modem && "txb" in last_modem[index] && "rxb" in last_modem[index]) {
-			  txb = item.txb - last_modem[index].txb;
-			  txb = Math.round((txb * 8) / 1024);
-			}
-			if(bitrateChart.data.datasets[index].data.length >= DATA_COUNT)
-			{
-				bitrateChart.data.datasets[index].data.shift();
-			}
-			bitrateChart.data.datasets[index].data.push(txb);
-		 });
-		bitrateChart.update(); 
-		last_modem = data;
-		});
-	}, 1000);
-	/** temperature **/
-	const labels_temp = [];
-	for (let i = 0; i < DATA_COUNT; ++i) {
-	  labels_temp.push(i.toString());
-	}
-	const data_temp = {
-	  labels: labels_temp,
-	  datasets: []
-	};
-	
-	$.getJSON("/temps", function(data) {
-		data.forEach((item, index) => {
-			tempval = item.type_value / 1000;
-			tempChart.data.datasets[index] = {
-				label: `(${item.i}) ${item.type_name}`,
-				backgroundColor: `rgb(0, ${getRandomInt(0,255)}, ${getRandomInt(0,255)})`,
-				borderColor: `rgb(0, ${getRandomInt(0,255)}, ${getRandomInt(0,255)})`,
-				data: [tempval],
-			  };
-		});
-		tempChart.update();
-	});
-	
-	const config_temp = {
-	  type: 'line',
-	  data: data_temp,
-	  options: {
-		responsive: true,
-		plugins: {
-		  legend: {
-			position: 'bottom',
-		  },
-		  title: {
-			display: true,
-			text: 'Temperature Graph by m_o_o_'
-		  }
-		},
-		scales: {
-		  x: {
-			display: true,
-			title: {
-			  display: true
-			}
-		  },
-		  y: {
-			display: true,
-			title: {
-			  display: true,
-			  text: '°C'
-			},
-			suggestedMin: 10,
-			suggestedMax: 100
-		  }
-		}
-	  },
-	};
-	
-	var tempChart = new Chart(
-		document.getElementById('tempChart'),
-		config_temp
-	  );
-	setInterval(function(){
-		$.getJSON("/temps", function(data) {
-			data.forEach((item, index) => {
-				//console.log(tempChart.data.datasets[index].data);
-				tempval = item.type_value / 1000;
-				if(tempChart.data.datasets[index].data.length >= DATA_COUNT)
-				{
-					tempChart.data.datasets[index].data.shift();
-				}
-				tempChart.data.datasets[index].data.push(tempval);
-			});
-		tempChart.update(); 
-		});
-	}, 1000);
-	</script>
+	<script type="text/javascript" src="/belaui.js"></script>
   </body>
 </html>
