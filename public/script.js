@@ -24,17 +24,20 @@ function enableUpdates() {
   update_timer = setInterval(updateStatus, 1000);
 }
 
-function updateStatus() {
-  updateStartStopButton();
-  updateModems();
-  updateTemps();
+async function updateStatus() {
+  const response = await fetch("/data");
+  if (!response.ok) return;
+  const data = await response.json();
+  updateStartStopButton(data);
+  updateModems(data);
+  updateTemps(data);
 }
 
-async function updateStartStopButton() {
-  const response = await fetch("/status");
-  isStreaming = await response.json();
+function updateStartStopButton(data) {
+  
+  isStreaming = data["active"];
+  console.log(isStreaming);
 
-  if (!response.ok) return;
 
   if (!isStreaming) {
     updateButtonAndSettingsShow({
@@ -81,11 +84,8 @@ function updateButtonAndSettingsShow({ add, remove, text, enabled, settingsShow 
   updateButton({add, remove, text, enabled });
 }
 
-async function updateModems() {
-  const response = await fetch("/modems");
-  const modems = await response.json();
-
-  if (!response.ok) return;
+function updateModems(data) {
+  modems = data.modems;
 
   const modemsList = document.getElementById("modems");
   let html = "";
@@ -109,11 +109,8 @@ async function updateModems() {
   prev_modems = modems;
 }
 
-async function updateTemps() {
-  const response = await fetch("/temps");
-  const temps = await response.json();
-
-  if (!response.ok) return;
+function updateTemps(data) {
+  temps = data.temps;
 
   const tempsList = document.getElementById("temps");
   let html = "";
