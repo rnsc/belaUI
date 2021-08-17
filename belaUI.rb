@@ -20,6 +20,8 @@ require 'sinatra/json'
 require 'sinatra/reloader'
 require 'json'
 require 'digest'
+require 'uri'
+require 'net/http'
 
 $setup = JSON.parse(File.read(__dir__ + '/setup.json'))
 begin
@@ -95,7 +97,7 @@ end
 
 def is_active
   `ps -aux |grep runner.rb |grep -v grep`.lines.count > 0
-end
+end 
 
 def set_bitrate(params)
   return nil unless params[:min_br] and params[:max_br]
@@ -112,6 +114,11 @@ end
 
 get '/' do
   send_file File.expand_path('index.html', settings.public_folder)
+end
+
+get '/data' do
+  all_data = { :active=>is_active, :modems=>get_modems, :temps=>get_temps}
+  json all_data
 end
 
 get '/status' do
@@ -227,4 +234,15 @@ end
 
 get '/v1/hello.html' do
   return 'Success'
+end
+
+if $setup['autostart'] == true
+   Thread.new do
+	  sleep 1
+	  uri = URI.parse("http://127.0.0.1/start")
+	  http = Net::HTTP.new(uri.host, uri.port)
+	  formdata = "pipeline="+$config['pipeline']+"&delay="+$config['delay'].to_s+"&min_br="+$config['min_br'].to_s+"&max_br="+$config['max_br'].to_s+"&srtla_addr="+$config['srtla_addr']+"&srtla_port="+$config['srtla_port'].to_s+"&srt_streamid="+$config['srt_streamid']+"&srt_latency="+$config['srt_latency'].to_s
+	  res = http.post(uri.path, formdata)
+	  printf res.to_s.concat("\n"), 3
+   end
 end
