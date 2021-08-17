@@ -1,4 +1,5 @@
 {
+  "autostart": false,
   "hw": "jetson",
   "belacoder_path": "/home/nvidia/belacoder/",
   "srtla_path": "/home/nvidia/srtla/",
