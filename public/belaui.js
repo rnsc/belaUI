@@ -23,20 +23,6 @@ function hashHandler() {
 
 window.addEventListener('hashchange', hashHandler, false);
 */
-
-/** bitrate **/
-const DATA_COUNT = 12;
-const labels = [];
-for (let i = 0; i < DATA_COUNT; ++i) {
-  labels.push(i.toString());
-}
-const data = {
-  labels: labels,
-  datasets: []
-};
-
-let last_modem;
-
 /*
 $("#startStop").on("click", function(event){
 	$("#bitrateChart").toggle();
@@ -45,29 +31,20 @@ $("#startStop").on("click", function(event){
 $("#bitrateChart").hide();
 */
 
-$.getJSON("/modems", function(data) {
-	data.forEach((item, index) => {
-		let txb = 0;
-		//R1=item.rxb
-		//T1=item.txb
-		//sleep 1
-		//R2=item.rxb
-		//T2=item.txb
-		//tot=(( (R2 + T2 - R1 - T1) / 1024 ))
-		bitrateChart.data.datasets[index] = {
-			label: `${item.i} (${item.ip})`,
-			backgroundColor: `rgb(0, ${getRandomInt(0,255)}, ${getRandomInt(0,255)})`,
-			borderColor: `rgb(0, ${getRandomInt(0,255)}, ${getRandomInt(0,255)})`,
-			data: [txb],
-		  };
-	 });
-	bitrateChart.update(); 
-	last_modem = data;
-});
-
-const config = {
+/** bitrate **/
+const DATA_COUNT = 12;
+const labels_bitrate = [];
+for (let i = 0; i < DATA_COUNT; ++i) {
+  labels_bitrate.push(i.toString());
+}
+const data_bitrate = {
+  labels: labels_bitrate,
+  datasets: []
+};
+let last_modem;
+const config_bitrate = {
   type: 'line',
-  data: data,
+  data: data_bitrate,
   options: {
 	responsive: true,
 	plugins: {
@@ -98,30 +75,10 @@ const config = {
 	}
   },
 };
-
 var bitrateChart = new Chart(
 	document.getElementById('bitrateChart'),
-	config
+	config_bitrate
 );
-  
-setInterval(function(){
-	$.getJSON("/modems", function(data) {
-		data.forEach((item, index) => {
-		let txb = 0;
-		if (last_modem && index in last_modem && "txb" in last_modem[index] && "rxb" in last_modem[index]) {
-		  txb = item.txb - last_modem[index].txb;
-		  txb = Math.round((txb * 8) / 1024);
-		}
-		if(bitrateChart.data.datasets[index].data.length >= DATA_COUNT)
-		{
-			bitrateChart.data.datasets[index].data.shift();
-		}
-		bitrateChart.data.datasets[index].data.push(txb);
-	 });
-	bitrateChart.update(); 
-	last_modem = data;
-	});
-}, 1000);
 /** temperature **/
 const labels_temp = [];
 for (let i = 0; i < DATA_COUNT; ++i) {
@@ -131,20 +88,6 @@ const data_temp = {
   labels: labels_temp,
   datasets: []
 };
-
-$.getJSON("/temps", function(data) {
-	data.forEach((item, index) => {
-		tempval = item.type_value / 1000;
-		tempChart.data.datasets[index] = {
-			label: `(${item.i}) ${item.type_name}`,
-			backgroundColor: `rgb(0, ${getRandomInt(0,255)}, ${getRandomInt(0,255)})`,
-			borderColor: `rgb(0, ${getRandomInt(0,255)}, ${getRandomInt(0,255)})`,
-			data: [tempval],
-		  };
-	});
-	tempChart.update();
-});
-
 const config_temp = {
   type: 'line',
   data: data_temp,
@@ -178,14 +121,59 @@ const config_temp = {
 	}
   },
 };
-
 var tempChart = new Chart(
 	document.getElementById('tempChart'),
 	config_temp
-  );
-setInterval(function(){
-	$.getJSON("/temps", function(data) {
-		data.forEach((item, index) => {
+);
+/** Graph methods **/
+$.getJSON("/data", function(data) {
+	data.modems.forEach((item, index) => {
+		let txb = 0;
+		//R1=item.rxb
+		//T1=item.txb
+		//sleep 1
+		//R2=item.rxb
+		//T2=item.txb
+		//tot=(( (R2 + T2 - R1 - T1) / 1024 ))
+		bitrateChart.data.datasets[index] = {
+			label: `${item.i} (${item.ip})`,
+			backgroundColor: `rgb(0, ${getRandomInt(0,255)}, ${getRandomInt(0,255)})`,
+			borderColor: `rgb(0, ${getRandomInt(0,255)}, ${getRandomInt(0,255)})`,
+			data: [txb],
+		  };
+	 });
+	bitrateChart.update(); 
+	last_modem = data;
+	/** temperature **/
+	data.temps.forEach((item, index) => {
+		tempval = item.type_value / 1000;
+		tempChart.data.datasets[index] = {
+			label: `(${item.i}) ${item.type_name}`,
+			backgroundColor: `rgb(0, ${getRandomInt(0,255)}, ${getRandomInt(0,255)})`,
+			borderColor: `rgb(0, ${getRandomInt(0,255)}, ${getRandomInt(0,255)})`,
+			data: [tempval],
+		  };
+	});
+	tempChart.update();
+	
+	setInterval(function(){
+		$.getJSON("/data", function(data) {
+			data.modems.forEach((item, index) => {
+			let txb = 0;
+			if (last_modem && index in last_modem && "txb" in last_modem[index] && "rxb" in last_modem[index]) {
+			  txb = item.txb - last_modem[index].txb;
+			  txb = Math.round((txb * 8) / 1024);
+			}
+			if(bitrateChart.data.datasets[index].data.length >= DATA_COUNT)
+			{
+				bitrateChart.data.datasets[index].data.shift();
+			}
+			bitrateChart.data.datasets[index].data.push(txb);
+		 });
+		 bitrateChart.update(); 
+		 last_modem = data.modems;
+		 /** temperature **/
+		 data.temps.forEach((item, index) => {
 			//console.log(tempChart.data.datasets[index].data);
 			tempval = item.type_value / 1000;
 			if(tempChart.data.datasets[index].data.length >= DATA_COUNT)
@@ -193,7 +181,8 @@ setInterval(function(){
 				tempChart.data.datasets[index].data.shift();
 			}
 			tempChart.data.datasets[index].data.push(tempval);
+		 });
+		 tempChart.update(); 
 		});
-	tempChart.update(); 
-	});
-}, 1000);
+	}, 1000);
+});
