@@ -1,6 +1,7 @@
 [Unit]
 Description=belaUI service
-After=network.target
+After=network-online.target
+Wants=network-online.target systemd-networkd-wait-online.service
 
 [Service]
 # install_service.sh automatically sets WorkingDirectory to point to the current directory
