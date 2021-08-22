@@ -20,18 +20,28 @@ require 'sinatra/json'
 require 'sinatra/reloader'
 require 'json'
 require 'digest'
-require 'uri'
-require 'net/http'
 
 $setup = JSON.parse(File.read(__dir__ + '/setup.json'))
 begin
   $config = JSON.parse(File.read(__dir__ + '/config.json'))
+  $loaded_config = true
 rescue
   $config = {}
 end
 
+def start_stream(delay, pipeline_hash, min_br, max_br, srtla_addr, srtla_port, srt_latency, srt_streamid, pipeline_file)
+  IO.popen([
+    'ruby', "#{__dir__}/runner.rb",
+      $config['pipeline_file'],
+      $config['delay'].to_s,
+      $config['srtla_addr'],
+      $config['srtla_port'].to_s,
+      $config['srt_latency'].to_s,
+      $config['srt_streamid']])
+end
+
 def save_config
-  File.write(__dir__ + '/config.json', $config.to_json)
+  File.write(__dir__ + '/config.json', JSON.pretty_generate($config))
 end
 
 def in_array(array, search)
@@ -51,7 +61,7 @@ def get_modems
       ip = line[srci+1]
       i = line[2]
       rxb = File.read("/sys/class/net/#{i}/statistics/rx_bytes")
-	  txb = File.read("/sys/class/net/#{i}/statistics/tx_bytes")
+      txb = File.read("/sys/class/net/#{i}/statistics/tx_bytes")
       modems.push({:i=>i, :ip=>ip, :txb=>txb.gsub("\n",''), :rxb=>rxb.gsub("\n",'')})
     end
   end
@@ -69,7 +79,7 @@ def get_temps
       type_value = `cat /sys/class/thermal/thermal_zone#{i}/temp | tr -d '\n'`
       temps.push({:i=>i, :type_name=>type_name, :type_value=>type_value})
     end
-	i = i+1
+  i = i+1
   end
   temps
 end
@@ -79,9 +89,9 @@ def get_pipelines()
   pipelines += Dir["#{$setup['belacoder_path']}/pipeline/jetson/*"].sort if $setup['hw'] == 'jetson'
   pipelines += Dir["#{$setup['belacoder_path']}/pipeline/generic/*"].sort
   pipelines.each do |pipelineFile|
-	text = File.read(pipelineFile)
-	new_contents = text.gsub(/textoverlay [^!]* ![[:blank:]]*\R+/,'')
-	File.open(pipelineFile, "w") {|filecontent| filecontent.puts new_contents }
+  text = File.read(pipelineFile)
+  new_contents = text.gsub(/textoverlay [^!]* ![[:blank:]]*\R+/,'')
+  File.open(pipelineFile, "w") {|filecontent| filecontent.puts new_contents }
   end
   pipelines.map { |pipeline|
     { 'file' => pipeline, 'id' => Digest::SHA1.hexdigest(pipeline) }
@@ -196,6 +206,7 @@ post '/start' do
 
   $config['delay'] = delay
   $config['pipeline'] = params[:pipeline]
+  $config['pipeline_file'] = pipeline['file']
   $config['min_br'] = bitrate[0]
   $config['max_br'] = bitrate[1]
   $config['srtla_port'] = srtla_port
@@ -203,14 +214,15 @@ post '/start' do
   $config['srt_streamid'] = srt_streamid
   save_config()
 
-  IO.popen([
-    'ruby', "#{__dir__}/runner.rb",
-     pipeline['file'],
-     delay.to_s,
-     srtla_addr,
-     srtla_port.to_s,
-     srt_latency.to_s,
-     srt_streamid])
+  start_stream($config['delay'], 
+      $config['pipeline'], 
+      $config['min_br'], 
+      $config['max_br'], 
+      $config['srtla_addr'], 
+      $config['srtla_port'], 
+      $config['srt_latency'], 
+      $config['srt_streamid'], 
+      $config['pipeline_file'])
 
   json true
 end
@@ -236,13 +248,15 @@ get '/v1/hello.html' do
   return 'Success'
 end
 
-if $setup['autostart'] == true
-   Thread.new do
-	  sleep 1
-	  uri = URI.parse("http://127.0.0.1/start")
-	  http = Net::HTTP.new(uri.host, uri.port)
-	  formdata = "pipeline="+$config['pipeline']+"&delay="+$config['delay'].to_s+"&min_br="+$config['min_br'].to_s+"&max_br="+$config['max_br'].to_s+"&srtla_addr="+$config['srtla_addr']+"&srtla_port="+$config['srtla_port'].to_s+"&srt_streamid="+$config['srt_streamid']+"&srt_latency="+$config['srt_latency'].to_s
-	  res = http.post(uri.path, formdata)
-	  printf res.to_s.concat("\n"), 3
-   end
+
+if $loaded_config and ! is_active and $setup['autostart'] == true
+  start_stream($config['delay'], 
+        $config['pipeline'], 
+        $config['min_br'], 
+        $config['max_br'], 
+        $config['srtla_addr'], 
+        $config['srtla_port'], 
+        $config['srt_latency'], 
+        $config['srt_streamid'], 
+        $config['pipeline_file'])
 end

@@ -1,2 +1,13 @@
-#!/bin/sh
-cp ~/belaUI/*.json /tmp/ && systemctl stop belaUI && rm -rf ~/belaUI && git clone https://github.com/moo-the-cow/belaUI && mv /tmp/*.json ~/belaUI/ && systemctl start belaUI
+#!/bin/bash
+
+set -ex
+
+sudo systemctl stop belaUI
+
+cd ~/belaUI/ || exit
+
+echo "*.json" > .gitignore
+
+git pull
+
+sudo systemctl start belaUI
