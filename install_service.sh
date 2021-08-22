@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ex
+set -e
 
 sed "s#WorkingDirectory=.*#WorkingDirectory=$(pwd)#g" belaUI.service > /etc/systemd/system/belaUI.service
 systemctl daemon-reload
