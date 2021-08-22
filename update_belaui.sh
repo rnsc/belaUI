@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set +ex
+set -ex
 
 sudo systemctl stop belaUI
 

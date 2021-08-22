@@ -41,7 +41,7 @@ def start_stream(delay, pipeline_hash, min_br, max_br, srtla_addr, srtla_port, s
 end
 
 def save_config
-  File.write(__dir__ + '/config.json', $config.to_json)
+  File.write(__dir__ + '/config.json', JSON.pretty_generate($config))
 end
 
 def in_array(array, search)
