@@ -6,7 +6,8 @@ After=network.target
 # install_service.sh automatically sets WorkingDirectory to point to the current directory
 WorkingDirectory=/home/nvidia/belaUI
 ExecStart=/usr/bin/ruby ./belaUI.rb -o 0.0.0.0 -p 80
-KillMode=process
+ExecStop=pkill -f belaUI.rb;pkill -f runner.rb;killall srtla_send;killall belacoder
+KillMode=mixed
 Restart=always
 
 [Install]
