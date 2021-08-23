@@ -1,2 +1,2 @@
 #!/bin/sh
-cp ../belaUI/*.json /tmp/ && sudo systemctl stop belaUI && rm -rf ../belaUI && cd .. && git clone https://github.com/moo-the-cow/belaUI && mv /tmp/*.json ./belaUI/ && sudo systemctl start belaUI
+sudo cp ../belaUI/*.json /tmp/ && sudo systemctl stop belaUI && sudo rm -rf ../belaUI && cd .. && git clone https://github.com/moo-the-cow/belaUI && sudo mv /tmp/*.json ./belaUI/ && sudo systemctl start belaUI
