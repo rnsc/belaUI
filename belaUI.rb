@@ -112,8 +112,44 @@ def set_bitrate(params)
   return [min_br, max_br]
 end
 
+def update_bela()
+  update_result = ""
+  if(File.file?('../belacoder/version.json'))
+    belacoder_version_remote = JSON.parse open('https://raw.githubusercontent.com/moo-the-cow/belacoder/master/version.json').read
+	belacoder_version_local = JSON.parse open('../belacoder/version.json').read
+	if(belacoder_version != belacoder_version_remote)
+      `chmod +x ../belacoder/update_belacoder.sh && sh ../belacoder/update_belacoder.sh`
+	  update_result += "belacoder "
+	end
+  else
+    `chmod +x ../belacoder/update_belacoder.sh && sh ../belacoder/update_belacoder.sh`
+	update_result += "belacoder "
+  end
+  if(File.file?('version.json'))
+    belacoder_version_remote = JSON.parse open('https://raw.githubusercontent.com/moo-the-cow/belaUI/master/version.json').read
+	belacoder_version_local = JSON.parse open('version.json').read
+	if(belacoder_version != belacoder_version_remote)
+      `chmod +x update_belaui.sh && sh update_belaui.sh`
+	  update_result += "belaUI "
+	end
+  else
+    `chmod +x update_belaui.sh && sh update_belaui.sh`
+	update_result += "belaUI "
+  end
+  if(update_result == "")
+    update_result = "no updates available"
+  else
+    update_result += "updated"
+  end
+  return update_result
+end
+
 get '/' do
   send_file File.expand_path('index.html', settings.public_folder)
+end
+
+get '/update' do
+  json update_bela
 end
 
 get '/data' do
@@ -223,9 +259,13 @@ post '/bitrate' do
 end
 
 post '/command' do
-  error 400 unless ["poweroff", "reboot"].include?(params[:cmd])
-  fork { sleep 1 and exec(params[:cmd]) }
-  json true
+  error 400 unless ["poweroff", "reboot", "update"].include?(params[:cmd])
+  if(params[:cmd] == "update")
+    json update_bela
+  else
+    fork { sleep 1 and exec(params[:cmd]) }
+    json true
+  end
 end
 
 get '/generate_204' do
