@@ -115,9 +115,9 @@ end
 def update_bela()
   update_result = ""
   if(File.file?('../belacoder/version.json'))
-    belacoder_version_remote = JSON.parse open('https://raw.githubusercontent.com/moo-the-cow/belacoder/master/version.json').read
+    belacoder_version_remote = JSON.parse Net::HTTP.get_response(URI.parse(('https://raw.githubusercontent.com/moo-the-cow/belacoder/master/version.json'))).body
 	belacoder_version_local = JSON.parse open('../belacoder/version.json').read
-	if(belacoder_version != belacoder_version_remote)
+	if(belacoder_version_local != belacoder_version_remote)
       `chmod +x ../belacoder/update_belacoder.sh && sh ../belacoder/update_belacoder.sh`
 	  update_result += "belacoder "
 	end
@@ -126,9 +126,9 @@ def update_bela()
 	update_result += "belacoder "
   end
   if(File.file?('version.json'))
-    belacoder_version_remote = JSON.parse open('https://raw.githubusercontent.com/moo-the-cow/belaUI/main/version.json').read
-	belacoder_version_local = JSON.parse open('version.json').read
-	if(belacoder_version != belacoder_version_remote)
+    belaui_version_remote = JSON.parse Net::HTTP.get_response(URI.parse(('https://raw.githubusercontent.com/moo-the-cow/belaUI/main/version.json'))).body
+	belaui_version_local = JSON.parse open('version.json').read
+	if(belaui_version_local != belaui_version_remote)
       `chmod +x update_belaui.sh && sh update_belaui.sh`
 	  update_result += "belaUI "
 	end
