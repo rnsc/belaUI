@@ -294,14 +294,20 @@ async function send_command(cmd) {
     method: "POST",
     body: formBody,
   });
+  
+  response_json = response.json();
+  response_data = response_json.data;
 
   if (response.ok) {
     clearInterval(update_timer);
     switch(cmd) {
+	  case 'update':
+        show_overlay(response_data);
+        break;
       case 'reboot':
         show_overlay('Restarting...');
         break;
-      case 'poweroff':
+      case 'mm':
         show_overlay('Powered off');
         break;
     }
