@@ -126,7 +126,7 @@ def update_bela()
 	update_result += "belacoder "
   end
   if(File.file?('version.json'))
-    belacoder_version_remote = JSON.parse open('https://raw.githubusercontent.com/moo-the-cow/belaUI/master/version.json').read
+    belacoder_version_remote = JSON.parse open('https://raw.githubusercontent.com/moo-the-cow/belaUI/main/version.json').read
 	belacoder_version_local = JSON.parse open('version.json').read
 	if(belacoder_version != belacoder_version_remote)
       `chmod +x update_belaui.sh && sh update_belaui.sh`
