@@ -5,10 +5,9 @@ After=network.target
 [Service]
 # install_service.sh automatically sets WorkingDirectory to point to the current directory
 WorkingDirectory=/home/%i/belaUI
-ExecStart=/usr/bin/ruby ./belaUI.rb -o 0.0.0.0 -p 8080
+ExecStart=/usr/bin/ruby ./belaUI.rb -o 0.0.0.0 -p 80
 KillMode=process
 Restart=always
-User=%i
 
 [Install]
 WantedBy=multi-user.target
