@@ -6,8 +6,10 @@ sudo systemctl stop belaUI
 
 cd ~/belaUI/ || exit
 
-echo "*.json" > .gitignore
+mv setup.json setup.json.orig
 
 git pull
+
+mv setup.json.orig setup.json
 
 sudo systemctl start belaUI
