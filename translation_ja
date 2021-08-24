@@ -1,0 +1,20 @@
+{
+  "start": "Start",
+  "bitrate": "Bitrate",
+  "port": "Port",
+  "ip": "IP",
+  "id": "ID",
+  "name": "Name",
+  "temperature": "Temperature",
+  "encoder-settings": "Encoder Settings",
+  "srtla-settings": "SRTLA Settings",
+  "system": "System",
+  "audio-delay": "Audio Delay",
+  "srtla-receiver-address":"SRTLA receiver address",
+  "srtla-receiver-port":"SRTLA receiver port",
+  "srt-streamid":"SRT streamid",
+  "srt-latency":"SRT latency",
+  "update": "Update",
+  "power-off": "Power Off",
+  "restart" : "Restart"
+}
