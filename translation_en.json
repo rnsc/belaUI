@@ -1,9 +1,8 @@
-[
+{
   "start": "Start",
   "bitrate": "Bitrate",
   "port": "Port",
   "ip": "IP",
-  "bitrate": "Bitrate",
   "id": "ID",
   "name": "Name",
   "temperature": "Temperature",
@@ -14,9 +13,8 @@
   "srtla-receiver-address":"SRTLA receiver address",
   "srtla-receiver-port":"SRTLA receiver port",
   "srt-streamid":"SRT streamid",
-  "srt-streamid":"SRT streamid",
   "srt-latency":"SRT latency",
   "update": "Update",
   "power-off": "Power Off",
   "restart" : "Restart"
-]
+}
