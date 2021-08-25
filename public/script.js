@@ -36,14 +36,12 @@ async function updateStatus() {
 function updateStartStopButton(data) {
   
   isStreaming = data["active"];
-  console.log(isStreaming);
-
 
   if (!isStreaming) {
     updateButtonAndSettingsShow({
       add: "btn-success",
       remove: "btn-danger",
-      text: "Start",
+      text: currentLanguageData['start'],
       enabled: true,
       settingsShow: true,
     });
@@ -51,7 +49,7 @@ function updateStartStopButton(data) {
     updateButtonAndSettingsShow({
       add: "btn-danger",
       remove: "btn-success",
-      text: "Stop",
+      text: currentLanguageData['stop'],
       enabled: true,
       settingsShow: false,
     });
@@ -167,8 +165,8 @@ async function getConfig() {
   document.getElementById("srtlaPort").value = config["srtla_port"] ?? "";
 }
 
-function show_delay(value) {
-  document.getElementById("delayValue").value = `Audio delay: ${value} ms`;
+function show_delay(audiodelay_text, value) {
+  document.getElementById("delayValue").value = `${audiodelay_text}: ${value} ms`;
 }
 
 function init_delay_slider(default_delay) {
@@ -178,16 +176,16 @@ function init_delay_slider(default_delay) {
     step: 20,
     value: default_delay,
     slide: (event, ui) => {
-      show_delay(ui.value);
+      show_delay(currentLanguageData["audio-delay"], ui.value);
     },
   });
-  show_delay(default_delay);
+  show_delay(currentLanguageData["audio-delay"], default_delay);
 }
 
-function showBitrate(values) {
+function showBitrate(bitrate_text, values) {
   document.getElementById(
     "bitrateValues"
-  ).value = `Bitrate: ${values[0]} - ${values[1]} Kbps`;
+  ).value = `${bitrate_text}: ${values[0]} - ${values[1]} Kbps`;
 }
 
 function setBitrate([min_br, max_br]) {
@@ -209,15 +207,15 @@ function init_bitrate_slider(bitrate_defaults) {
     step: 100,
     values: bitrate_defaults,
     slide: (event, ui) => {
-      showBitrate(ui.values);
+      showBitrate(currentLanguageData["bitrate"], ui.values);
       setBitrate(ui.values);
     },
   });
-  showBitrate(bitrate_defaults);
+  showBitrate(currentLanguageData["bitrate"], bitrate_defaults);
 }
 
-function show_srt_latency(value) {
-  document.getElementById("srtLatencyValue").value = `SRT latency: ${value} ms`;
+function show_srt_latency(latency_text, value) {
+  document.getElementById("srtLatencyValue").value = `${latency_text}: ${value} ms`;
 }
 
 function init_srt_latency_slider(default_latency) {
@@ -227,10 +225,10 @@ function init_srt_latency_slider(default_latency) {
     step: 100,
     value: default_latency,
     slide: (event, ui) => {
-      show_srt_latency(ui.value);
+      show_srt_latency(currentLanguageData["srt-latency"], ui.value);
     },
   });
-  show_srt_latency(default_latency);
+  show_srt_latency(currentLanguageData["srt-latency"], default_latency);
 }
 
 function show_error(message) {
@@ -318,7 +316,7 @@ document.getElementById("startStop").addEventListener("click", () => {
   clearInterval(update_timer);
 
   if (!isStreaming) {
-    updateButton({text: "Starting..."});
+    updateButton({text: currentLanguageData['starting'] + "..."});
     start();
   } else {
     stop();
@@ -338,7 +336,10 @@ $(".alert").on("close.bs.alert", function () {
   return false;
 });
 
-getPipelines();
-getConfig();
-updateStatus();
-enableUpdates();
+/* on jquery loaded */
+$(function() {
+	getPipelines();
+	getConfig();
+	updateStatus();
+	enableUpdates();
+});
