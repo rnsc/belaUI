@@ -20,6 +20,8 @@ require 'sinatra/json'
 require 'sinatra/reloader'
 require 'json'
 require 'digest'
+require 'uri'
+require 'net/http'
 
 $setup = JSON.parse(File.read(__dir__ + '/setup.json'))
 begin
