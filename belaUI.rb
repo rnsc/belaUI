@@ -122,8 +122,44 @@ def set_bitrate(params)
   return [min_br, max_br]
 end
 
+def update_bela()
+  update_result = ""
+  if(File.file?('../belacoder/version.json'))
+    belacoder_version_remote = JSON.parse Net::HTTP.get_response(URI.parse(('https://raw.githubusercontent.com/moo-the-cow/belacoder/master/version.json'))).body
+  belacoder_version_local = JSON.parse open('../belacoder/version.json').read
+  if(belacoder_version_local != belacoder_version_remote)
+      `chmod +x ../belacoder/update_belacoder.sh && sh ../belacoder/update_belacoder.sh`
+    update_result += "belacoder "
+  end
+  else
+    `chmod +x ../belacoder/update_belacoder.sh && sh ../belacoder/update_belacoder.sh`
+  update_result += "belacoder "
+  end
+  if(File.file?('version.json'))
+    belaui_version_remote = JSON.parse Net::HTTP.get_response(URI.parse(('https://raw.githubusercontent.com/moo-the-cow/belaUI/main/version.json'))).body
+  belaui_version_local = JSON.parse open('version.json').read
+  if(belaui_version_local != belaui_version_remote)
+      `chmod +x update_belaui.sh && sh update_belaui.sh`
+    update_result += "belaUI "
+  end
+  else
+    `chmod +x update_belaui.sh && sh update_belaui.sh`
+  update_result += "belaUI "
+  end
+  if(update_result == "")
+    update_result = "no updates available"
+  else
+    update_result += "updated"
+  end
+  return update_result
+end
+
 get '/' do
   send_file File.expand_path('index.html', settings.public_folder)
+end
+
+get '/update' do
+  json update_bela
 end
 
 get '/data' do
@@ -235,9 +271,13 @@ post '/bitrate' do
 end
 
 post '/command' do
-  error 400 unless ["poweroff", "reboot"].include?(params[:cmd])
-  fork { sleep 1 and exec(params[:cmd]) }
-  json true
+  error 400 unless ["poweroff", "reboot", "update"].include?(params[:cmd])
+  if(params[:cmd] == "update")
+    json update_bela
+  else
+    fork { sleep 1 and exec(params[:cmd]) }
+    json true
+  end
 end
 
 get '/generate_204' do
@@ -250,13 +290,18 @@ end
 
 
 if $loaded_config and ! is_active and $setup['autostart'] == true
-  start_stream($config['delay'], 
-        $config['pipeline'], 
-        $config['min_br'], 
-        $config['max_br'], 
-        $config['srtla_addr'], 
-        $config['srtla_port'], 
-        $config['srt_latency'], 
-        $config['srt_streamid'], 
-        $config['pipeline_file'])
+  Thread.new do
+    if $setup.key?('autostart-delay')
+      delay = $setup['autostart-delay']
+    else
+      delay = 10
+    end
+    sleep delay
+    sleep 1
+    uri = URI.parse("http://127.0.0.1/start")
+    http = Net::HTTP.new(uri.host, uri.port)
+    formdata = "pipeline="+$config['pipeline']+"&delay="+$config['delay'].to_s+"&min_br="+$config['min_br'].to_s+"&max_br="+$config['max_br'].to_s+"&srtla_addr="+$config['srtla_addr']+"&srtla_port="+$config['srtla_port'].to_s+"&srt_streamid="+$config['srt_streamid']+"&srt_latency="+$config['srt_latency'].to_s
+    res = http.post(uri.path, formdata)
+    printf res.to_s.concat("\n"), 3
+  end
 end

@@ -1,3 +1,5 @@
+var config = localStorage.getItem("config") == null ? { "lang": "en"} : JSON.parse(localStorage.getItem("config"));
+
 function getRandomInt(min, max) {
   min = Math.ceil(min);
   max = Math.floor(max);
@@ -15,6 +17,30 @@ else if(window.location.hash.substring(1) == "graph-bitrate")
 	$('#bitrateChart').appendTo('body');
 }
 
+/* translation */
+$("#language > option[value="+config["lang"]+"]").attr('selected','');
+var currentLanguage = $("#language > option:selected").val();
+var currentLanguageData = {};
+const getLanguageData = (lang) => {
+	let languageSource = `translation_${lang}.json`;
+	request = $.getJSON(languageSource, function(data) {
+		currentLanguageData = data;
+	});
+	return request;
+};
+
+$("#language").on("change", function(event) {
+    currentLanguage = $(this).val();
+	config["lang"] = currentLanguage;
+	localStorage.setItem("config", JSON.stringify(config));
+	getLanguageData(currentLanguage).then(function(data)
+	{
+		Object.keys(data).forEach(key => {
+			$(`[data-lang='${key}']`).html(data[key]);
+		});
+		currentLanguageData = data;
+	});
+});
 /*
 function hashHandler() {
   console.log(window.location.hash.substring(1));
@@ -185,4 +211,15 @@ $.getJSON("/data", function(data) {
 		 tempChart.update(); 
 		});
 	}, 1000);
+});
+
+/* on jquery loaded */
+$(function() {
+	getLanguageData(currentLanguage).then(function(data)
+	{
+		Object.keys(data).forEach(key => {
+			$(`[data-lang='${key}']`).html(data[key]);
+		});
+		currentLanguageData = data;
+	});
 });
