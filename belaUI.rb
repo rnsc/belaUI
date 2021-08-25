@@ -278,6 +278,12 @@ end
 
 if $setup['autostart'] == true
    Thread.new do
+	  if $setup.key?('autostart-delay')
+	    delay = $setup['autostart-delay']
+	  else
+	    delay = 10
+	  end
+	  sleep delay
 	  sleep 1
 	  uri = URI.parse("http://127.0.0.1/start")
 	  http = Net::HTTP.new(uri.host, uri.port)
