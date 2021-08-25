@@ -38,9 +38,16 @@
 			  <span aria-hidden="true">&times;</span>
 			</button>
 		  </div> <!-- .alert -->
+		  
+			<label for="language" data-lang="language">Language</label>
+			<select id="language">
+				<option value="en">english</option>
+				<option value="ja">日本語</option>
+			</select>
+			<br/>
 
 		  <div class="mb-4">
-			<button type="button" id="startStop" class="btn btn-lg btn-block mb-2">
+			<button type="button" id="startStop" class="btn btn-lg btn-block mb-2" data-lang="start">
 			  Start
 			</button>
 
@@ -53,9 +60,9 @@
 		  <table class="table mb-4">
 			<thead>
 			  <tr>
-				<th scope="col">Port</th>
-				<th scope="col">IP</th>
-				<th scope="col" class="col-6">Bitrate</th>
+				<th scope="col" data-lang="port">Port</th>
+				<th scope="col" data-lang="ip">IP</th>
+				<th scope="col" class="col-6" data-lang="bitrate">Bitrate</th>
 			  </tr>
 			</thead>
 			<tbody id="modems"></tbody>
@@ -68,7 +75,7 @@
 			  <tr>
 				<th scope="col">ID</th>
 				<th scope="col">Name</th>
-				<th scope="col" class="col-6">Temperature</th>
+				<th scope="col" class="col-6" data-lang="temperature">Temperature</th>
 			  </tr>
 			</thead>
 			<tbody id="temps"></tbody>
@@ -81,7 +88,7 @@
 			  <div class="card-header bg-success text-center" type="button"
 				   data-toggle="collapse" data-target="#collapseOne">
 				<button class="btn btn-link text-white" type="button" data-toggle="collapse"
-						data-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+						data-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne" data-lang="encoder-settings">
 				  Encoder settings
 				</button>
 			  </div> <!-- card-header -->
@@ -103,7 +110,7 @@
 			  <div class="card-header bg-success text-center" type="button"
 				   data-toggle="collapse" data-target="#collapseTwo">
 				<button class="btn btn-link text-white" type="button" data-toggle="collapse"
-				  data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+				  data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo" data-lang="srtla-settings">
 				  SRTLA settings
 				</button>
 			  </div> <!-- .card-header -->
@@ -111,15 +118,15 @@
 			  <div class="collapse" id="collapseTwo">
 				<div class="card-body">
 				  <div class="form-group">
-					<label for="srtlaAddr">SRTLA receiver address</label>
+					<label for="srtlaAddr" data-lang="srtla-receiver-address">SRTLA receiver address</label>
 					<input type="text" class="form-control" id="srtlaAddr" />
 				  </div>
 				  <div class="form-group">
-					<label for="srtlaPort">SRTLA receiver port</label>
+					<label for="srtlaPort" data-lang="srtla-receiver-port">SRTLA receiver port</label>
 					<input type="text" class="form-control" id="srtlaPort" />
 				  </div>
 				  <div class="form-group">
-					<label for="srtStreamid">SRT streamid</label>
+					<label for="srtStreamid" data-lang="srt-streamid">SRT streamid</label>
 					<input type="text" class="form-control" id="srtStreamid" />
 				  </div>
 				  <div class="form-group">
@@ -134,20 +141,20 @@
 			  <div class="card-header bg-success text-center" type="button"
 				   data-toggle="collapse" data-target="#collapseThree">
 				<button class="btn btn-link text-white" type="button" data-toggle="collapse"
-						data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+						data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree" data-lang="system">
 				  System
 				</button>
 			  </div> <!-- card-header -->
 
 			  <div class="collapse" id="collapseThree">
 				<div class="card-body">
-				<button type="button" id="update" class="btn btn-block btn-danger command-btn">
+				<button type="button" id="update" class="btn btn-block btn-danger command-btn" data-lang="update">
 					Update
 				  </button>
-				  <button type="button" id="poweroff" class="btn btn-block btn-danger command-btn">
+				  <button type="button" id="poweroff" class="btn btn-block btn-danger command-btn" data-lang="power-off">
 					Power off
 				  </button>
-				  <button type="button" id="reboot" class="btn btn-block btn-danger command-btn">
+				  <button type="button" id="reboot" class="btn btn-block btn-danger command-btn" data-lang="restart">
 					Restart
 				  </button>
 				</div> <!-- .card-body -->
@@ -160,7 +167,7 @@
 		<div class="overlay" id="overlayBG"></div>
 		<div class="overlay" id="overlayText">
 		  <p></p>
-		  <button type="button" id="refreshBtn" class="btn btn-lg btn-light">Refresh</button>
+		  <button type="button" id="refreshBtn" class="btn btn-lg btn-light" data-lang="refresh">Refresh</button>
 		</div>
 	</div>
 
