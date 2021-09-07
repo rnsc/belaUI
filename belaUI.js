@@ -88,6 +88,7 @@ const server = http.createServer(function(req, res) {
 const wss = new ws.Server({ server });
 wss.on('connection', function connection(conn) {
   conn.lastActive = Date.now();
+	console.log()
   conn.on('message', function incoming(msg) {
     console.log(msg);
     try {
@@ -410,6 +411,8 @@ function spawnStreamingLoop(command, args) {
 }
 
 function start(conn, params) {
+	console.log(conn)
+	console.log(params)
   updateConfig(conn, params, function(pipeline) {
     if (genSrtlaIpList() < 1) {
       startError(conn, "Failed to start, no available network connections");
@@ -418,11 +421,11 @@ function start(conn, params) {
     isStreaming = true;
 
     spawnStreamingLoop(setup.srtla_path + '/srtla_send', [
-                         9000,
-                         config.srtla_addr,
-                         config.srtla_port,
-                         setup.ips_file
-                       ]);
+                        9000,
+                        config.srtla_addr,
+                        config.srtla_port,
+                        setup.ips_file
+                      ]);
 
     const belacoderArgs = [
                             pipeline,
@@ -565,5 +568,8 @@ function handleMessage(conn, msg) {
   }
 }
 
-server.listen(80);
+if (config.autostart) {
+  handleMessage()
+}
 
+server.listen(80);

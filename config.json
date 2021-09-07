@@ -1,1 +1,4 @@
-{"password":"changeme"}
+{
+	"autostart": false,
+	"password": "changeme"
+}
