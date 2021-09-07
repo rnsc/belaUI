@@ -569,20 +569,22 @@ function handleMessage(conn, msg) {
 }
 
 if (config.autostart) {
-  const [minBr, maxBr] = $("#bitrateSlider").slider("values");
 
-  let config = {};
-  config.pipeline = document.getElementById("pipelines").value;
-  config.delay = $("#delaySlider").slider("value");
-  config.min_br = minBr;
-  config.max_br = maxBr;
-  config.srtla_addr = document.getElementById("srtlaAddr").value;
-  config.srtla_port = document.getElementById("srtlaPort").value;
-  config.srt_streamid = document.getElementById("srtStreamid").value;
-  config.srt_latency = $("#srtLatencySlider").slider("value");
-	let c = new WebSocket("ws://localhost");
+	var WebSocketClient = require('websocket').client;
 
-  ws.send(JSON.stringify({start: config}));
+	var client = new WebSocketClient();
+
+	client.on('connectFailed', function(error) {
+			console.log('Connect Error: ' + error.toString());
+	});
+
+	client.on('connect', function(connection) {
+			console.log('WebSocket Client Connected');
+			connection.send(JSON.stringify({start: getConfig()}))
+
+	});
+
+	client.connect('ws://localhost/', 'echo-protocol');
 }
 
 server.listen(80);
