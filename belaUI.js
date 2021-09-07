@@ -25,6 +25,9 @@ const crypto = require('crypto');
 const path = require('path');
 const dns = require('dns');
 const bcrypt = require('bcrypt');
+const socVoltageFilePath = '/sys/bus/i2c/drivers/ina3221x/6-0040/iio:device0/in_voltage0_input';
+const socCurrentFilePath = '/sys/bus/i2c/drivers/ina3221x/6-0040/iio:device0/in_current0_input';
+const socTempFilePath = '/sys/class/thermal/thermal_zone0/temp';
 
 const SETUP_FILE = 'setup.json';
 const CONFIG_FILE = 'config.json';
@@ -242,26 +245,38 @@ function handleNetif(conn, msg) {
 /* Hardware monitoring */
 let sensors = {};
 function updateSensorsJetson() {
-  try {
-    let socVoltage = fs.readFileSync('/sys/bus/i2c/drivers/ina3221x/6-0040/iio:device0/in_voltage0_input', 'utf8');
-    socVoltage = parseInt(socVoltage) / 1000.0;
-    socVoltage = `${socVoltage.toFixed(3)} V`;
-    sensors['SoC voltage'] = socVoltage;
-  } catch(err) {};
+	if (fs.existsSync(socVoltageFilePath)){
+		try {
+			let socVoltage = fs.readFileSync(socVoltageFilePath, 'utf8');
+			socVoltage = parseInt(socVoltage) / 1000.0;
+			socVoltage = `${socVoltage.toFixed(3)} V`;
+			sensors['SoC voltage'] = socVoltage;
+		} catch(err) {};
+	} else {
+		sensors['SoC voltage'] = 0;
+	}
 
-  try {
-    let socCurrent = fs.readFileSync('/sys/bus/i2c/drivers/ina3221x/6-0040/iio:device0/in_current0_input', 'utf8');
-    socCurrent = parseInt(socCurrent) / 1000.0;
-    socCurrent = `${socCurrent.toFixed(3)} A`;
-    sensors['SoC current'] = socCurrent;
-  } catch(err) {};
+	if (fs.existsSync(socCurrentFilePath)){
+		try {
+			let socCurrent = fs.readFileSync(socCurrentFilePath, 'utf8');
+			socCurrent = parseInt(socCurrent) / 1000.0;
+			socCurrent = `${socCurrent.toFixed(3)} A`;
+			sensors['SoC current'] = socCurrent;
+		} catch(err) {};
+	} else {
+		sensors['SoC current'] = 0;
+	}
 
-  try {
-    let socTemp = fs.readFileSync('/sys/class/thermal/thermal_zone0/temp', 'utf8');
-    socTemp = parseInt(socTemp) / 1000.0;
-    socTemp = `${socTemp.toFixed(1)} °C`;
-    sensors['SoC temperature'] = socTemp;
-  } catch (err) {};
+	if(fs.existsSync(socTempFilePath)){
+		try {
+			let socTemp = fs.readFileSync(socTempFilePath, 'utf8');
+			socTemp = parseInt(socTemp) / 1000.0;
+			socTemp = `${socTemp.toFixed(1)} °C`;
+			sensors['SoC temperature'] = socTemp;
+		} catch (err) {};
+	} else {
+		sensors['SoC temperature'] = 0;
+	}
 
   broadcastMsg('sensors', sensors, Date.now() - ACTIVE_TO);
 }
