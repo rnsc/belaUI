@@ -254,7 +254,7 @@ function updateSensorsJetson() {
       sensors['SoC voltage'] = socVoltage;
     } catch(err) {};
   } else {
-    sensors['SoC voltage'] = 0;
+    sensors['SoC voltage'] = null;
   }
 
   if (fs.existsSync(socCurrentFilePath)){
@@ -265,7 +265,7 @@ function updateSensorsJetson() {
       sensors['SoC current'] = socCurrent;
     } catch(err) {};
   } else {
-    sensors['SoC current'] = 0;
+    sensors['SoC current'] = null;
   }
 
   if(fs.existsSync(socTempFilePath)){
@@ -276,7 +276,7 @@ function updateSensorsJetson() {
       sensors['SoC temperature'] = socTemp;
     } catch (err) {};
   } else {
-    sensors['SoC temperature'] = 0;
+    sensors['SoC temperature'] = null;
   }
 
   broadcastMsg('sensors', sensors, Date.now() - ACTIVE_TO);
