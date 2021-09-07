@@ -88,7 +88,6 @@ const server = http.createServer(function(req, res) {
 const wss = new ws.Server({ server });
 wss.on('connection', function connection(conn) {
   conn.lastActive = Date.now();
-  console.log()
   conn.on('message', function incoming(msg) {
     console.log(msg);
     try {
