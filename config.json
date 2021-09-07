@@ -1,6 +1,5 @@
 {
   "autostart": false,
   "autostart_delay_ms": 5000,
-  "password": "changeme",
-  "enable_auth": true
+  "password": "changeme"
 }

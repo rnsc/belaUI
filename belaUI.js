@@ -522,7 +522,7 @@ function handleMessage(conn, msg) {
     }
   }
 
-  if (!conn.isAuthed && config.enable_auth) return;
+  if (!conn.isAuthed && !config.autostart) return;
 
   for (const type in msg) {
     switch(type) {
