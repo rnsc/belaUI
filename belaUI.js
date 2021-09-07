@@ -69,11 +69,11 @@ try {
 }
 
 function saveConfig() {
-  fs.writeFileSync(CONFIG_FILE, JSON.stringify(config));
+  fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
 }
 
 function savePersistentTokens() {
-  fs.writeFileSync(AUTH_TOKENS_FILE, JSON.stringify(persistentTokens));
+  fs.writeFileSync(AUTH_TOKENS_FILE, JSON.stringify(persistentTokens, null, 2));
 }
 
 
