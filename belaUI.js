@@ -569,7 +569,20 @@ function handleMessage(conn, msg) {
 }
 
 if (config.autostart) {
-  handleMessage()
+  const [minBr, maxBr] = $("#bitrateSlider").slider("values");
+
+  let config = {};
+  config.pipeline = document.getElementById("pipelines").value;
+  config.delay = $("#delaySlider").slider("value");
+  config.min_br = minBr;
+  config.max_br = maxBr;
+  config.srtla_addr = document.getElementById("srtlaAddr").value;
+  config.srtla_port = document.getElementById("srtlaPort").value;
+  config.srt_streamid = document.getElementById("srtStreamid").value;
+  config.srt_latency = $("#srtLatencySlider").slider("value");
+	let c = new WebSocket("ws://localhost");
+
+  ws.send(JSON.stringify({start: config}));
 }
 
 server.listen(80);
