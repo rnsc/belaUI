@@ -88,7 +88,7 @@ const server = http.createServer(function(req, res) {
 const wss = new ws.Server({ server });
 wss.on('connection', function connection(conn) {
   conn.lastActive = Date.now();
-	console.log()
+  console.log()
   conn.on('message', function incoming(msg) {
     console.log(msg);
     try {
@@ -246,38 +246,38 @@ function handleNetif(conn, msg) {
 /* Hardware monitoring */
 let sensors = {};
 function updateSensorsJetson() {
-	if (fs.existsSync(socVoltageFilePath)){
-		try {
-			let socVoltage = fs.readFileSync(socVoltageFilePath, 'utf8');
-			socVoltage = parseInt(socVoltage) / 1000.0;
-			socVoltage = `${socVoltage.toFixed(3)} V`;
-			sensors['SoC voltage'] = socVoltage;
-		} catch(err) {};
-	} else {
-		sensors['SoC voltage'] = 0;
-	}
+  if (fs.existsSync(socVoltageFilePath)){
+    try {
+      let socVoltage = fs.readFileSync(socVoltageFilePath, 'utf8');
+      socVoltage = parseInt(socVoltage) / 1000.0;
+      socVoltage = `${socVoltage.toFixed(3)} V`;
+      sensors['SoC voltage'] = socVoltage;
+    } catch(err) {};
+  } else {
+    sensors['SoC voltage'] = 0;
+  }
 
-	if (fs.existsSync(socCurrentFilePath)){
-		try {
-			let socCurrent = fs.readFileSync(socCurrentFilePath, 'utf8');
-			socCurrent = parseInt(socCurrent) / 1000.0;
-			socCurrent = `${socCurrent.toFixed(3)} A`;
-			sensors['SoC current'] = socCurrent;
-		} catch(err) {};
-	} else {
-		sensors['SoC current'] = 0;
-	}
+  if (fs.existsSync(socCurrentFilePath)){
+    try {
+      let socCurrent = fs.readFileSync(socCurrentFilePath, 'utf8');
+      socCurrent = parseInt(socCurrent) / 1000.0;
+      socCurrent = `${socCurrent.toFixed(3)} A`;
+      sensors['SoC current'] = socCurrent;
+    } catch(err) {};
+  } else {
+    sensors['SoC current'] = 0;
+  }
 
-	if(fs.existsSync(socTempFilePath)){
-		try {
-			let socTemp = fs.readFileSync(socTempFilePath, 'utf8');
-			socTemp = parseInt(socTemp) / 1000.0;
-			socTemp = `${socTemp.toFixed(1)} °C`;
-			sensors['SoC temperature'] = socTemp;
-		} catch (err) {};
-	} else {
-		sensors['SoC temperature'] = 0;
-	}
+  if(fs.existsSync(socTempFilePath)){
+    try {
+      let socTemp = fs.readFileSync(socTempFilePath, 'utf8');
+      socTemp = parseInt(socTemp) / 1000.0;
+      socTemp = `${socTemp.toFixed(1)} °C`;
+      sensors['SoC temperature'] = socTemp;
+    } catch (err) {};
+  } else {
+    sensors['SoC temperature'] = 0;
+  }
 
   broadcastMsg('sensors', sensors, Date.now() - ACTIVE_TO);
 }
@@ -411,8 +411,6 @@ function spawnStreamingLoop(command, args) {
 }
 
 function start(conn, params) {
-	console.log(conn)
-	console.log(params)
   updateConfig(conn, params, function(pipeline) {
     if (genSrtlaIpList() < 1) {
       startError(conn, "Failed to start, no available network connections");
@@ -525,7 +523,7 @@ function handleMessage(conn, msg) {
     }
   }
 
-  if (!conn.isAuthed) return;
+  if (!conn.isAuthed && config.enable_auth) return;
 
   for (const type in msg) {
     switch(type) {
@@ -568,23 +566,27 @@ function handleMessage(conn, msg) {
   }
 }
 
-if (config.autostart) {
-
-	var WebSocketClient = require('websocket').client;
-
-	var client = new WebSocketClient();
-
-	client.on('connectFailed', function(error) {
-			console.log('Connect Error: ' + error.toString());
-	});
-
-	client.on('connect', function(connection) {
-			console.log('WebSocket Client Connected');
-			connection.send(JSON.stringify({start: getConfig()}))
-
-	});
-
-	client.connect('ws://localhost/', 'echo-protocol');
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 server.listen(80);
+
+if (config.autostart) {
+
+  var WebSocketClient = require('websocket').client;
+  var client = new WebSocketClient();
+
+  client.on('connectFailed', function(error) {
+      console.log('Connect Error: ' + error.toString());
+  });
+
+  client.on('connect', async function(connection) {
+    console.log('WebSocket Client Connected');
+    await sleep(config.autostart_delay_ms);
+    connection.send(JSON.stringify({start: getConfig()}))
+  });
+
+  client.connect('ws://localhost/', 'start');
+  client.close()
+}
