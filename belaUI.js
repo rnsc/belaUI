@@ -584,9 +584,8 @@ if (config.autostart) {
   client.on('connect', async function(connection) {
     console.log('WebSocket Client Connected');
     await sleep(config.autostart_delay_ms);
-    connection.send(JSON.stringify({start: getConfig()}))
+    connection.send(JSON.stringify({start: config}))
   });
 
   client.connect('ws://localhost/', 'start');
-  client.close()
 }
