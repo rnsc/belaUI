@@ -18,6 +18,7 @@
 const http = require('http');
 const finalhandler = require('finalhandler');
 const serveStatic = require('serve-static');
+const si = require('systeminformation');
 const ws = require('ws');
 const { exec, execSync, spawn, spawnSync } = require("child_process");
 const fs = require('fs')
@@ -164,51 +165,50 @@ function getPipelineList() {
   return list;
 }
 
+function getCurrentIfaceNetworkTx(name) {
+  let tx_bytes = 0;
+  try {
+    tx_bytes = fs.readFileSync('/sys/class/net/'+ name +'/statistics/tx_bytes').toString().trim();
+  } catch (e) {
+    console.log(e);
+  }
+  return tx_bytes;
+}
 
 /* Network interface list */
 let netif = {};
 function updateNetif() {
-  exec("ifconfig", (error, stdout, stderr) => {
-    if (error) {
-      console.log(error.message);
-      return;
-    }
 
-    let foundNewInt = false;
-    const newints = {};
+  let foundNewInt = false;
+  const newints = {};
 
-    const interfaces = stdout.split("\n\n");
-    for (const int of interfaces) {
-      try {
-        const name = int.split(':')[0]
+  si.networkInterfaces(function(data) {
+    for (let int of data) {
+        const name = int.iface;
         if (name == 'lo' || name.match('^docker')) continue;
 
-        let inet_addr = int.match(/inet \d+\.\d+\.\d+\.\d+/);
+        let inet_addr = int.ip4;
         if (inet_addr == null) continue;
-        inet_addr = inet_addr[0].split(' ')[1]
 
-        let tx_bytes = int.match(/TX packets \d+  bytes \d+/);
-        tx_bytes = parseInt(tx_bytes[0].split(' ').pop());
+        let tx_bytes = getCurrentIfaceNetworkTx(name);
         if (netif[name]) {
           tp = tx_bytes - netif[name]['txb'];
         } else {
           tp = 0;
         }
-
         const enabled = (netif[name] && netif[name].enabled == false) ? false : true;
         newints[name] = {ip: inet_addr, txb: tx_bytes, tp: tp, enabled: enabled};
 
         if (!netif[name]) foundNewInt = true;
-      } catch (err) {};
+
     }
     netif = newints;
+  })
+  broadcastMsg('netif', netif, Date.now() - ACTIVE_TO);
 
-    broadcastMsg('netif', netif, Date.now() - ACTIVE_TO);
-
-    if (foundNewInt && isStreaming) {
-      updateSrtlaIps();
-    }
-  });
+  if (foundNewInt && isStreaming) {
+    updateSrtlaIps();
+  }
 }
 updateNetif();
 setInterval(updateNetif, 1000);
@@ -493,7 +493,7 @@ function connAuth(conn, sendToken) {
 }
 
 function tryAuth(conn, msg) {
-  if (typeof(msg.password) == 'string') {
+  if (typeof(msg.password) == 'string' && config.enable_auth) {
     bcrypt.compare(msg.password, config.password_hash, function(err, match) {
       if (match == true && err == undefined) {
         conn.authToken = genAuthToken(msg.persistent_token);
@@ -502,13 +502,16 @@ function tryAuth(conn, msg) {
         sendError(conn, "Invalid password");
       }
     });
-  } else if (typeof(msg.token) == 'string') {
+  } else if (typeof(msg.token) == 'string' && config.enable_auth) {
     if (tempTokens[msg.token] || persistentTokens[msg.token]) {
       connAuth(conn);
       conn.authToken = msg.token;
     } else {
       conn.send(buildMsg('auth', {success: false}));
     }
+  } else if (!config.enable_auth) {
+    conn.authToken = genAuthToken(true)
+    connAuth(conn, conn.authToken)
   }
 }
 
@@ -522,7 +525,7 @@ function handleMessage(conn, msg) {
     }
   }
 
-  if (!conn.isAuthed && !config.autostart) return;
+  if (!conn.isAuthed && config.enable_auth) return;
 
   for (const type in msg) {
     switch(type) {
