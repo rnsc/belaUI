@@ -39,13 +39,9 @@ function tryConnect() {
     ws = c;
 
     hideError();
-    if (!config.enable_auth) {
-      ws.send(JSON.stringify({auth: {}}));
-      $('#logout').hide();
-    } else {
-      tryTokenAuth();
-      $('.btn-netact').removeAttr('disabled');
-    }
+    ws.send(JSON.stringify({auth: {}}));
+    tryTokenAuth();
+    $('.btn-netact').removeAttr('disabled');
   });
 }
 
