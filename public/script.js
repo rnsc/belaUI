@@ -39,21 +39,26 @@ function tryConnect() {
     ws = c;
 
     hideError();
-    tryTokenAuth();
-    $('.btn-netact').removeAttr('disabled');
+    if (!config.enable_auth) {
+      ws.send(JSON.stringify({auth: {}}));
+      $('#logout').hide();
+    } else {
+      tryTokenAuth();
+      $('.btn-netact').removeAttr('disabled');
+    }
   });
 }
 
 tryConnect();
 
 /* WS keep-alive */
-/* If the browser / tab is in the background, the Javascript may be suspended,
-   while the WS stays connected. In that case we don't want to receive periodic
-   updates from the belaUI server as we'll have to walk through a potentially
-   long list of stale data when the browser / tab regains focus and wakes up.
+/*  If the browser / tab is in the background, the Javascript may be suspended,
+    while the WS stays connected. In that case we don't want to receive periodic
+    updates from the belaUI server as we'll have to walk through a potentially
+    long list of stale data when the browser / tab regains focus and wakes up.
 
-   The periodic keep-alive packets let the server know that this client is still
-   active and should receive updates.
+    The periodic keep-alive packets let the server know that this client is still
+    active and should receive updates.
 */
 setInterval(function() {
   if (ws) {
@@ -73,7 +78,7 @@ function tryTokenAuth() {
 }
 
 function handleAuthResult(msg) {
-  if (msg.success === true) {
+  if (msg.success === true || !config.enable_auth) {
     if (msg.auth_token) {
       localStorage.setItem('authToken', msg.auth_token);
     }
@@ -392,7 +397,7 @@ $('#login>form').submit(function() {
   let auth_req = {auth: {
                     password: $('#password').val(),
                     persistent_token: $('#rememberMe').prop('checked')
-                 }};
+                }};
   $('#password').val('');
   ws.send(JSON.stringify(auth_req));
   console.log();
