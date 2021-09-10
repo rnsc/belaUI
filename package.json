@@ -5,6 +5,6 @@
     "bcrypt": "^3.0.8",
     "ws": "^7.4.4",
     "websocket": "^1.0.34",
-		"systeminformation": "^5.8.7"
+    "systeminformation": "^5.8.7"
   }
 }
