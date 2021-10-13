@@ -29,6 +29,7 @@ const bcrypt = require('bcrypt');
 const socVoltageFilePath = '/sys/bus/i2c/drivers/ina3221x/6-0040/iio:device0/in_voltage0_input';
 const socCurrentFilePath = '/sys/bus/i2c/drivers/ina3221x/6-0040/iio:device0/in_current0_input';
 const socTempFilePath = '/sys/class/thermal/thermal_zone0/temp';
+const process = require('process');
 
 const SETUP_FILE = 'setup.json';
 const CONFIG_FILE = 'config.json';
@@ -37,17 +38,49 @@ const AUTH_TOKENS_FILE = 'auth_tokens.json';
 const BCRYPT_ROUNDS = 10;
 const ACTIVE_TO = 15000;
 
-/* Read the git revision number */
-const revision = execSync('git rev-parse --short HEAD').toString().trim();
-console.log(revision);
-
 /* Read the config and setup files */
 const setup = JSON.parse(fs.readFileSync(SETUP_FILE, 'utf8'));
 console.log(setup);
 
+const belacoderExec = setup.belacoder_path + '/belacoder';
+const srtlaSendExec = setup.srtla_path + '/srtla_send';
+
+function checkExecPath(path) {
+  try {
+    fs.accessSync(path, fs.constants.R_OK);
+  } catch (err) {
+    console.log(`\n\n${path} not found, double check the settings in setup.json`);
+    process.exit(1);
+  }
+}
+
+checkExecPath(belacoderExec);
+checkExecPath(srtlaSendExec);
+
+
+/* Read the revision numbers */
+function getRevision(cmd) {
+  try {
+    return execSync(cmd).toString().trim();
+  } catch (err) {
+    return 'unknown revision';
+  }
+}
+
+const revisions = {};
+revisions['belaUI'] = getRevision('git rev-parse --short HEAD');
+revisions['belacoder'] = getRevision(`${belacoderExec} -v`);
+revisions['srtla'] = getRevision(`${srtlaSendExec} -v`);
+console.log(revisions);
+
+
 const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
 // Update the password hash if the config file has a password set
 if (config.password) {
+  if (config.password == 'changeme') {
+    console.log("\n\nYou must edit config.json to change the default password\n");
+    process.exit(1);
+  }
   setPassword(config.password);
   delete config.password;
   saveConfig();
@@ -199,7 +232,7 @@ function updateNetif() {
         const enabled = (netif[name] && netif[name].enabled == false) ? false : true;
         newints[name] = {ip: inet_addr, txb: tx_bytes, tp: tp, enabled: enabled};
 
-        if (!netif[name]) foundNewInt = true;
+        if (!netif[name] || netif[name].ip != inet_addr ) foundNewInt = true;
 
     }
     netif = newints;
@@ -298,20 +331,20 @@ function startError(conn, msg) {
 }
 
 function setBitrate(params) {
-  if (params.min_br == undefined || params.max_br == undefined) return null;
-  if (params.min_br < 500 || params.min_br > 12000) return null;
-  if (params.max_br < 500 || params.max_br > 12000) return null;
-  if (params.min_br > params.max_br) return null;
+  const minBr = 300; // Kbps
 
-  config.min_br = params.min_br;
+  if (params.max_br == undefined) return null;
+  if (params.max_br < minBr || params.max_br > 12000) return null;
+
   config.max_br = params.max_br;
   saveConfig();
 
-  fs.writeFileSync(setup.bitrate_file, params.min_br*1000 + "\n" + params.max_br*1000 + "\n");
+  fs.writeFileSync(setup.bitrate_file, minBr*1000 + "\n"
+                   + config.max_br*1000 + "\n");
 
   spawnSync("killall", ['-HUP', "belacoder"], { detached: true});
 
-  return [params.min_br, params.max_br];
+  return config.max_br;
 }
 
 function updateConfig(conn, params, callback) {
@@ -355,7 +388,6 @@ function updateConfig(conn, params, callback) {
     if (err == null) {
       config.delay = params.delay;
       config.pipeline = params.pipeline;
-      config.min_br = params.min_br;
       config.max_br = params.max_br;
       config.srt_latency = params.srt_latency;
       config.srt_streamid = params.srt_streamid;
@@ -417,12 +449,12 @@ function start(conn, params) {
     }
     isStreaming = true;
 
-    spawnStreamingLoop(setup.srtla_path + '/srtla_send', [
-                        9000,
-                        config.srtla_addr,
-                        config.srtla_port,
-                        setup.ips_file
-                      ]);
+    spawnStreamingLoop(srtlaSendExec, [
+												9000,
+												config.srtla_addr,
+												config.srtla_port,
+												setup.ips_file
+											]);
 
     const belacoderArgs = [
                             pipeline,
@@ -436,7 +468,7 @@ function start(conn, params) {
       belacoderArgs.push('-s');
       belacoderArgs.push(config.srt_streamid);
     }
-    spawnStreamingLoop(setup.belacoder_path + '/belacoder', belacoderArgs);
+    spawnStreamingLoop(belacoderExec, belacoderArgs);
 
     updateStatus(true);
   });
@@ -479,7 +511,7 @@ function sendInitialStatus(conn) {
   conn.send(buildMsg('status', {is_streaming: isStreaming}));
   conn.send(buildMsg('netif', netif));
   conn.send(buildMsg('sensors', sensors));
-  conn.send(buildMsg('revision', revision));
+  conn.send(buildMsg('revisions', revisions));
 }
 
 function connAuth(conn, sendToken) {
@@ -542,7 +574,7 @@ function handleMessage(conn, msg) {
         if (isStreaming) {
           const br = setBitrate(msg[type]);
           if (br != null) {
-            broadcastMsgExcept(conn, 'bitrate', {min_br: br[0], max_br: br[1]});
+            broadcastMsgExcept(conn, 'bitrate', {max_br: br});
           }
         }
         break;

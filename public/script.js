@@ -87,8 +87,14 @@ function handleAuthResult(msg) {
 }
 
 /* Show the revision number */
-function setRevision(rev) {
-  $('span#belaUIRevision').text(rev);
+function setRevisions(revs) {
+  let list = '';
+  for (s in revs) {
+    if (list != '') list += ', ';
+    list += `${s}\xa0${revs[s]}`;
+  }
+
+  $('#revisions').text(list);
 }
 
 
@@ -97,21 +103,37 @@ function setNetif(name, ip, enabled) {
   ws.send(JSON.stringify({'netif': {'name': name, 'ip': ip, 'enabled': enabled}}));
 }
 
+function genNetifEntry(enabled, name, ip, throughput) {
+  let checkbox = '';
+  if (enabled != undefined) {
+    checkbox = `<input type="checkbox" onclick="setNetif('${name}', '${ip}', this.checked)" ${enabled ? 'checked' : ''}>`;
+  }
+
+  html = `<tr>
+            <td>${checkbox}</td>
+            <td>${name}</td>
+            <td>${ip}</td>
+            <td>${throughput}</td>
+          </tr>`;
+  return html;
+}
+
 function updateNetif(netifs) {
   const modemList = document.getElementById("modems");
   let html = "";
+  let totalKbps = 0;
 
   for (const i in netifs) {
     data = netifs[i];
     console.log(i);
     tpKbps = Math.round((data['tp'] * 8) / 1024);
+    totalKbps += tpKbps;
 
-    html += `<tr>
-              <td><input type="checkbox" onclick="setNetif('${i}', '${data['ip']}', this.checked)" ${data.enabled ? 'checked' : ''}></td>
-              <td>${i}</td>
-              <td>${data['ip']}</td>
-              <td>${tpKbps} Kbps</td>
-            </tr>`;
+    html += genNetifEntry(data.enabled, i, data['ip'], `${tpKbps} Kbps`);
+  }
+
+  if (Object.keys(netifs).length > 1) {
+    html += genNetifEntry(undefined, '', '', `<b>${totalKbps} Kbps</b>`);
   }
 
   modemList.innerHTML = html;
@@ -163,7 +185,7 @@ function updateStatus(status) {
 function loadConfig(c) {
   config = c;
 
-  initBitrateSlider([c.min_br ?? 500, config.max_br ?? 5000]);
+  initBitrateSlider(config.max_br ?? 5000);
   initDelaySlider(config.delay ?? 0);
   initSrtLatencySlider(config.srt_latency ?? 2000);
   updatePipelines(null);
@@ -198,9 +220,8 @@ function updatePipelines(ps) {
 
 /* Bitrate setting updates */
 function updateBitrate(br) {
-  let val = [br.min_br, br.max_br];
-  $('#bitrateSlider').slider('option', 'values', val);
-  showBitrate(val);
+  $('#bitrateSlider').slider('option', 'value', br.max_br);
+  showBitrate(br.max_br);
 }
 
 
@@ -223,8 +244,8 @@ function handleMessage(msg) {
       case 'auth':
         handleAuthResult(msg[type]);
         break;
-      case 'revision':
-        setRevision(msg[type]);
+      case 'revisions':
+        setRevisions(msg[type]);
         break;
       case 'netif':
         updateNetif(msg[type]);
@@ -254,12 +275,11 @@ function handleMessage(msg) {
 
 /* Start / stop */
 function getConfig() {
-  const [minBr, maxBr] = $("#bitrateSlider").slider("values");
+  const maxBr = $("#bitrateSlider").slider("value");
 
   let config = {};
   config.pipeline = document.getElementById("pipelines").value;
   config.delay = $("#delaySlider").slider("value");
-  config.min_br = minBr;
   config.max_br = maxBr;
   config.srtla_addr = document.getElementById("srtlaAddr").value;
   config.srtla_port = document.getElementById("srtlaPort").value;
@@ -312,31 +332,31 @@ function updateButtonAndSettingsShow({ add, remove, text, enabled, settingsShow 
 }
 
 
-function setBitrate([min, max]) {
+function setBitrate(max) {
   if (isStreaming) {
-    ws.send(JSON.stringify({bitrate: {min_br: min, max_br: max}}));
+    ws.send(JSON.stringify({bitrate: {max_br: max}}));
   }
 }
 
-function showBitrate(values) {
+function showBitrate(value) {
   document.getElementById(
     "bitrateValues"
-  ).value = `Bitrate: ${values[0]} - ${values[1]} Kbps`;
+  ).value = `Max bitrate: ${value} Kbps`;
 }
 
-function initBitrateSlider(bitrateDefaults) {
+function initBitrateSlider(bitrateDefault) {
   $("#bitrateSlider").slider({
-    range: true,
+    range: false,
     min: 500,
     max: 12000,
-    step: 100,
-    values: bitrateDefaults,
+    step: 250,
+    value: bitrateDefault,
     slide: (event, ui) => {
-      showBitrate(ui.values);
-      setBitrate(ui.values);
+      showBitrate(ui.value);
+      setBitrate(ui.value);
     },
   });
-  showBitrate(bitrateDefaults);
+  showBitrate(bitrateDefault);
 }
 
 function showDelay(value) {
