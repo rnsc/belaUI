@@ -78,8 +78,8 @@ function handleAuthResult(msg) {
     if (msg.auth_token) {
       localStorage.setItem('authToken', msg.auth_token);
     }
-    $('#login').hide();
-    $('#main').show();
+    $('#login').addClass('d-none');
+    $('#main').removeClass('d-none');
     hideError();
   } else {
     showLoginForm();
@@ -103,80 +103,133 @@ function setNetif(name, ip, enabled) {
   ws.send(JSON.stringify({'netif': {'name': name, 'ip': ip, 'enabled': enabled}}));
 }
 
-function genNetifEntry(enabled, name, ip, throughput) {
+function genNetifEntry(enabled, name, ip, throughput, isBold = false) {
   let checkbox = '';
   if (enabled != undefined) {
-    checkbox = `<input type="checkbox" onclick="setNetif('${name}', '${ip}', this.checked)" ${enabled ? 'checked' : ''}>`;
+    const esc_name = name.replaceAll("'", "\\'");
+    const esc_ip = ip.replaceAll("'", "\\'");
+    checkbox = `<input type="checkbox"
+                 onclick="setNetif('${esc_name}', '${esc_ip}', this.checked)"
+                 ${enabled ? 'checked' : ''}>`;
   }
 
-  html = `<tr>
-            <td>${checkbox}</td>
-            <td>${name}</td>
-            <td>${ip}</td>
-            <td>${throughput}</td>
-          </tr>`;
-  return html;
+  const html = `
+    <tr>
+      <td>${checkbox}</td>
+      <td class="netif_name"></td>
+      <td class="netif_ip"></td>
+      <td class="netif_tp ${isBold ? 'font-weight-bold' : ''}"></td>
+    </tr>`;
+
+  const entry = $($.parseHTML(html));
+  entry.find('.netif_name').text(name);
+  entry.find('.netif_ip').text(ip);
+  entry.find('.netif_tp').text(throughput);
+
+  return entry;
 }
 
 function updateNetif(netifs) {
-  const modemList = document.getElementById("modems");
-  let html = "";
+  let modemList = [];
   let totalKbps = 0;
 
   for (const i in netifs) {
     data = netifs[i];
-    console.log(i);
     tpKbps = Math.round((data['tp'] * 8) / 1024);
     totalKbps += tpKbps;
 
-    html += genNetifEntry(data.enabled, i, data['ip'], `${tpKbps} Kbps`);
+    modemList.push(genNetifEntry(data.enabled, i, data.ip, `${tpKbps} Kbps`));
   }
 
   if (Object.keys(netifs).length > 1) {
-    html += genNetifEntry(undefined, '', '', `<b>${totalKbps} Kbps</b>`);
+    modemList.push(genNetifEntry(undefined, '', '', `${totalKbps} Kbps`, true));
   }
 
-  modemList.innerHTML = html;
+  $('#modems').html(modemList);
 }
 
 function updateSensors(sensors) {
-  const sensorList = document.getElementById("sensors");
-  let html = "";
+  const sensorList = [];
 
   for (const i in sensors) {
     data = sensors[i];
-    console.log(i);
 
-    html += `<tr>
-              <td>${i}</td>
-              <td>${data}</td>
-            </tr>`;
+    const entryHtml = `
+      <tr>
+        <td class="sensor_name"></td>
+        <td class="sensor_value"></td>
+      </tr>`;
+    const entry = $($.parseHTML(entryHtml));
+    entry.find('.sensor_name').text(i);
+    entry.find('.sensor_value').text(data);
+    sensorList.push(entry);
   }
 
-  sensorList.innerHTML = html;
+  $('#sensors').html(sensorList);
 }
 
 
-/* isStreaming status updates */
-function updateStatus(status) {
-  isStreaming = status.is_streaming;
+/* Remote status */
+let remoteConnectedHideTimer;
+function showRemoteStatus(status) {
+  if (remoteConnectedHideTimer) {
+    clearTimeout(remoteConnectedHideTimer);
+    remoteConnectedHideTimer = undefined;
+  }
 
-  if (isStreaming) {
-    updateButtonAndSettingsShow({
-      add: "btn-danger",
-      remove: "btn-success",
-      text: "Stop",
-      enabled: true,
-      settingsShow: false,
-    });
+  if (status === true) {
+    $('#remoteStatus').removeClass('alert-danger');
+    $('#remoteStatus').addClass('alert-success');
+    $('#remoteStatus').text("BELABOX cloud remote: connected");
+    remoteConnectedHideTimer = setTimeout(function() {
+      $('#remoteStatus').addClass('d-none');
+      remoteConnectedHideTimer = undefined;
+    }, 5000);
+  } else if (status.error) {
+    switch(status.error) {
+      case 'network':
+        $('#remoteStatus').text("BELABOX cloud remote: network error. Trying to reconnect...\n");
+        break;
+      case 'key':
+        $('#remoteStatus').text("BELABOX cloud remote: invalid key\n");
+        break;
+      default:
+        return;
+    }
+
+    $('#remoteStatus').addClass('alert-danger');
+    $('#remoteStatus').removeClass('alert-success');
   } else {
-    updateButtonAndSettingsShow({
-      add: "btn-success",
-      remove: "btn-danger",
-      text: "Start",
-      enabled: true,
-      settingsShow: true,
-    });
+    return;
+  }
+  $('#remoteStatus').removeClass('d-none');
+}
+
+/* status updates */
+function updateStatus(status) {
+  if (status.is_streaming !== undefined) {
+    isStreaming = status.is_streaming;
+    if (isStreaming) {
+      updateButtonAndSettingsShow({
+        add: "btn-danger",
+        remove: "btn-success",
+        text: "Stop",
+        enabled: true,
+        settingsShow: false,
+      });
+    } else {
+      updateButtonAndSettingsShow({
+        add: "btn-success",
+        remove: "btn-danger",
+        text: "Start",
+        enabled: true,
+        settingsShow: true,
+      });
+    }
+  }
+
+  if (status.remote) {
+    showRemoteStatus(status.remote);
   }
 }
 
@@ -193,6 +246,9 @@ function loadConfig(c) {
   document.getElementById("srtStreamid").value = config.srt_streamid ?? "";
   document.getElementById("srtlaAddr").value = config.srtla_addr ?? "";
   document.getElementById("srtlaPort").value = config.srtla_port ?? "";
+
+  $('#remoteDeviceKey').val(config.remote_key);
+  $('#remoteKeyForm button[type=submit]').prop('disabled', true);
 }
 
 
@@ -228,11 +284,11 @@ function updateBitrate(br) {
 /* Error messages */
 function showError(message) {
   $("#errorMsg>span").text(message);
-  $("#errorMsg").show();
+  $("#errorMsg").removeClass('d-none');
 }
 
 function hideError() {
-  $("#errorMsg").hide();
+  $("#errorMsg").addClass('d-none');
 }
 
 
@@ -405,8 +461,8 @@ document.getElementById("startStop").addEventListener("click", () => {
 });
 
 function showLoginForm() {
-  $('#main').hide();
-  $('#login').show();
+  $('#main').addClass('d-none');
+  $('#login').removeClass('d-none');
 }
 
 $('#login>form').submit(function() {
@@ -418,6 +474,19 @@ $('#login>form').submit(function() {
   ws.send(JSON.stringify(auth_req));
   console.log();
 
+  return false;
+});
+
+
+$('#remoteDeviceKey').on('input', function() {
+  const remote_key = $('#remoteDeviceKey').val();
+  const disabled = (remote_key == config.remote_key);
+  $('#remoteKeyForm button[type=submit]').prop('disabled', disabled);
+});
+
+$('#remoteKeyForm').submit(function() {
+  const remote_key = $('#remoteDeviceKey').val();
+  ws.send(JSON.stringify({config: {remote_key}}));
   return false;
 });
 
