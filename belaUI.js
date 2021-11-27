@@ -75,21 +75,7 @@ console.log(revisions);
 
 
 const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
-// Update the password hash if the config file has a password set
-if (config.password) {
-  if (config.password == 'changeme') {
-    console.log("\n\nYou must edit config.json to change the default password\n");
-    process.exit(1);
-  }
-  setPassword(config.password);
-  delete config.password;
-  saveConfig();
-}
 console.log(config);
-
-function setPassword(password) {
-  config.password_hash = bcrypt.hashSync(password, BCRYPT_ROUNDS);
-}
 
 
 /* tempTokens stores temporary login tokens in memory,
@@ -122,6 +108,11 @@ const server = http.createServer(function(req, res) {
 const wss = new ws.Server({ server });
 wss.on('connection', function connection(conn) {
   conn.lastActive = getms();
+
+  if (!config.password_hash) {
+    conn.send(buildMsg('status', {set_password: true}));
+  }
+
   conn.on('message', function incoming(msg) {
     console.log(msg);
     try {
@@ -292,7 +283,7 @@ function handleNetif(conn, msg) {
 }
 
 /* Remote */
-const remoteProtocolVersion = 1;
+const remoteProtocolVersion = 2;
 const remoteEndpoint = 'wss://remote.belabox.net/ws/remote';
 const remoteTimeout = 5000;
 const remoteConnectTimeout = 10000;
@@ -598,9 +589,10 @@ function spawnStreamingLoop(command, args, cooldown = 100) {
 }
 
 function start(conn, params) {
+  const senderId = conn.senderId;
   updateConfig(conn, params, function(pipeline) {
     if (genSrtlaIpList() < 1) {
-      startError(conn, "Failed to start, no available network connections");
+      startError(conn, "Failed to start, no available network connections", senderId);
       return;
     }
     isStreaming = true;
@@ -650,8 +642,18 @@ function command(conn, cmd) {
   }
 }
 
+function handleConfig(conn, msg, isRemote) {
+  // setPassword does its own authentication
+  for (const type in msg) {
+    switch(type) {
+      case 'password':
+        setPassword(conn, msg[type], isRemote);
+        break;
+    }
+  }
 
-function handleConfig(conn, msg) {
+  if (!conn.isAuthed) return;
+
   for (const type in msg) {
     switch(type) {
       case 'remote_key':
@@ -663,6 +665,19 @@ function handleConfig(conn, msg) {
 
 
 /* Authentication */
+function setPassword(conn, password, isRemote) {
+  if (conn.isAuthed || (!isRemote && !config.password_hash)) {
+    const minLen = 8;
+    if (password.length < minLen) {
+      sendError(conn, `Minimum password length: ${minLen} characters`);
+      return;
+    }
+    config.password_hash = bcrypt.hashSync(password, BCRYPT_ROUNDS);
+    delete config.password;
+    saveConfig();
+  }
+}
+
 function genAuthToken(isPersistent) {
   const token = crypto.randomBytes(32).toString('base64');
   if (isPersistent) {
@@ -751,9 +766,6 @@ function handleMessage(conn, msg, isRemote = false) {
         break;
       case 'command':
         command(conn, msg[type]);
-        break;
-      case 'config':
-        handleConfig(conn, msg[type]);
         break;
       case 'netif':
         handleNetif(conn, msg[type]);
